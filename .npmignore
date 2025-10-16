@@ -1,0 +1,46 @@
+# Source files
+src/
+tsconfig.json
+*.ts
+!*.d.ts
+
+# Tests
+test/
+tests/
+*.test.js
+*.spec.js
+
+# Development
+node_modules/
+.vscode/
+.idea/
+*.log
+.DS_Store
+coverage/
+
+# Environment
+.env
+.env.*
+.env.local
+
+# Build artifacts
+*.tsbuildinfo
+
+# Git
+.git/
+.gitignore
+
+# Documentation (keep README only)
+docs/
+CREATE_REMAINING_FILES.md
+INSTALL.md
+QUICKSTART.md
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Other
+*.map
+.editorconfig
