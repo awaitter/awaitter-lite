@@ -5,14 +5,28 @@
 **The AI coding assistant that NEVER loses track of your project**
 
 [![npm version](https://img.shields.io/npm/v/awaitter-lite.svg)](https://www.npmjs.com/package/awaitter-lite)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: Source Available](https://img.shields.io/badge/License-Source%20Available-blue.svg)](https://github.com/awaitter/awaitter-lite/blob/main/LICENSE)
 [![Downloads](https://img.shields.io/npm/dm/awaitter-lite.svg)](https://www.npmjs.com/package/awaitter-lite)
+[![GitHub](https://img.shields.io/github/stars/awaitter/awaitter-lite?style=social)](https://github.com/awaitter/awaitter-lite)
 
 Multi-model AI assistant with **automatic project planning**, **smart execution modes**, and **zero context loss**
 
 [Quick Start](#-quick-start) • [Features](#-features) • [Roadmap System](#-roadmap-system-new) • [Commands](#-commands) • [Models](#-supported-models)
 
 </div>
+
+---
+
+## 🔓 Open & Transparent
+
+**Awaitter Lite is now publicly available!**
+
+- 👁️ **Source Code Public** - View our implementation on [GitHub](https://github.com/awaitter/awaitter-lite)
+- 🔒 **Privacy First** - See exactly how your data is handled
+- 📖 **Learn & Study** - Understand how AI coding assistants work
+- 🐛 **Report Bugs** - Help us improve by reporting issues
+
+**Note:** We're not accepting external contributions at this time. See [CONTRIBUTING.md](https://github.com/awaitter/awaitter-lite/blob/main/CONTRIBUTING.md) for details.
 
 ---
 
