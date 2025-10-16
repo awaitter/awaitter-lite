@@ -1,6 +1,6 @@
 {
   "name": "awaitter-lite",
-  "version": "1.0.35",
+  "version": "1.0.36",
   "description": "Awaitter Lite - Multi-model AI coding assistant CLI supporting local LLMs, GPT-4, Claude, Gemini, and more",
   "main": "dist/index.js",
   "bin": {
@@ -35,13 +35,10 @@
   ],
   "author": "NovoLabs",
   "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/novolabs/awaitter-lite.git"
-  },
   "homepage": "https://awaitter.com",
   "bugs": {
-    "url": "https://github.com/novolabs/awaitter-lite/issues"
+    "email": "support@awaitter.com",
+    "url": "https://awaitter.com/support"
   },
   "funding": {
     "type": "individual",
