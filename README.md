@@ -663,7 +663,7 @@ Change modes mid-project:
 
 ## ☕ Support This Project
 
-Awaitter Lite is **free and open source**. If it saves you hours of work, consider supporting development:
+If Awaitter Lite saves you hours of work, consider supporting development:
 
 <div align="center">
 
@@ -687,23 +687,22 @@ MIT - Use freely in personal and commercial projects
 
 ---
 
-## 🤝 Contributing & Feedback
+## 🤝 Support & Feedback
 
 Found a bug? Have an idea? We'd love to hear from you!
 
-**Report Issues:** [github.com/awaitter/awaitter-lite/issues](https://github.com/awaitter/awaitter-lite/issues)
-
-**Feature Requests:** Tell us what you want to build!
+**Contact Support:** support@awaitter.com
+**Website:** [awaitter.com/support](https://awaitter.com/support)
 
 ---
 
 <div align="center">
 
-**Made with ❤️ by [NovoLabs](https://github.com/awaitter)**
+**Made with ❤️ by NovoLabs**
 
-⭐ Star on GitHub • 🐛 Report Bugs • 💡 Suggest Features • ☕ Buy us a Coffee
+📦 Available on npm • 💡 Professional AI Coding Assistant • ☕ Support Development
 
-[GitHub](https://github.com/awaitter/awaitter-lite) • [npm](https://www.npmjs.com/package/awaitter-lite) • [Ko-fi](https://ko-fi.com/novolabs)
+[npm](https://www.npmjs.com/package/awaitter-lite) • [Website](https://awaitter.com) • [Ko-fi](https://ko-fi.com/novolabs)
 
 ---
 
