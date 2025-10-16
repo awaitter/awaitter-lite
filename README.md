@@ -16,7 +16,7 @@ Multi-model AI assistant with **automatic project planning**, **smart execution 
 
 ---
 
-## ⚡ What's New in v1.0.25
+## ⚡ What's New in v1.0.35
 
 <table>
 <tr>
@@ -691,7 +691,7 @@ MIT - Use freely in personal and commercial projects
 
 Found a bug? Have an idea? We'd love to hear from you!
 
-**Report Issues:** [github.com/novolabs/awaitter-lite/issues](https://github.com/novolabs/awaitter-lite/issues)
+**Report Issues:** [github.com/awaitter/awaitter-lite/issues](https://github.com/awaitter/awaitter-lite/issues)
 
 **Feature Requests:** Tell us what you want to build!
 
@@ -699,11 +699,11 @@ Found a bug? Have an idea? We'd love to hear from you!
 
 <div align="center">
 
-**Made with ❤️ by [NovoLabs](https://github.com/novolabs)**
+**Made with ❤️ by [NovoLabs](https://github.com/awaitter)**
 
 ⭐ Star on GitHub • 🐛 Report Bugs • 💡 Suggest Features • ☕ Buy us a Coffee
 
-[GitHub](https://github.com/novolabs/awaitter-lite) • [npm](https://www.npmjs.com/package/awaitter-lite) • [Ko-fi](https://ko-fi.com/novolabs)
+[GitHub](https://github.com/awaitter/awaitter-lite) • [npm](https://www.npmjs.com/package/awaitter-lite) • [Ko-fi](https://ko-fi.com/novolabs)
 
 ---
 
