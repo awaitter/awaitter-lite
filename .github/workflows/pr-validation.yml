@@ -1,0 +1,69 @@
+name: PR Validation
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize]
+
+jobs:
+  validate-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR has linked issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const body = pr.body || '';
+            const title = pr.title || '';
+
+            // Check if PR links to an issue using keywords or #number
+            const issuePattern = /(?:close|closes|closed|fix|fixes|fixed|resolve|resolves|resolved|related|relates|issue)\s*:?\s*#(\d+)/gi;
+            const matches = [...body.matchAll(issuePattern), ...title.matchAll(issuePattern)];
+
+            if (matches.length === 0) {
+              const comment = `⚠️ **This PR will be closed automatically.**
+
+              **Reason:** No linked Issue found.
+
+              ## How to Fix
+
+              1. Open an Issue FIRST describing the problem/feature
+              2. Wait for maintainer approval (label: \`approved\`)
+              3. Reference the issue in your PR description using:
+                 - \`Closes #123\` or
+                 - \`Fixes #123\` or
+                 - \`Resolves #123\`
+
+              See [CONTRIBUTING.md](https://github.com/${context.repo.owner}/${context.repo.repo}/blob/main/CONTRIBUTING.md) for details.
+
+              ---
+
+              *This is an automated check. If you believe this is an error, please contact maintainers.*`;
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                body: comment
+              });
+
+              // Add label
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                labels: ['invalid', 'needs-issue']
+              });
+
+              // Close the PR
+              await github.rest.pulls.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr.number,
+                state: 'closed'
+              });
+
+              core.setFailed('PR must link to an approved Issue');
+            } else {
+              console.log(`✅ PR links to Issue(s): ${matches.map(m => '#' + m[1]).join(', ')}`);
+            }

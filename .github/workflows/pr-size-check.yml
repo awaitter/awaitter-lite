@@ -1,0 +1,89 @@
+name: PR Size Check
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  check-size:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check PR size
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const additions = pr.additions || 0;
+            const deletions = pr.deletions || 0;
+            const totalChanges = additions + deletions;
+            const maxLines = 200;
+
+            console.log(`PR changes: +${additions} -${deletions} = ${totalChanges} lines`);
+
+            if (totalChanges > maxLines) {
+              const comment = `⚠️ **This PR is too large!**
+
+              **Current size:** ${totalChanges} lines changed (+${additions} -${deletions})
+              **Maximum allowed:** ${maxLines} lines
+              **Exceeded by:** ${totalChanges - maxLines} lines
+
+              ## Why We Limit PR Size
+
+              - Easier to review thoroughly
+              - Faster feedback cycle
+              - Reduces merge conflicts
+              - Better code quality
+
+              ## How to Fix
+
+              Split your PR into smaller, focused changes:
+
+              1. **Identify logical chunks** - Each PR should do ONE thing
+              2. **Submit multiple PRs** - Submit them in sequence
+              3. **Link them together** - Reference related PRs
+
+              **Example:**
+              - PR #1: Fix bug X (50 lines)
+              - PR #2: Add feature Y (100 lines)
+              - PR #3: Update docs (30 lines)
+
+              See [CONTRIBUTING.md](https://github.com/${context.repo.owner}/${context.repo.repo}/blob/main/CONTRIBUTING.md) for guidelines.
+
+              ---
+
+              **Exception:** If this is a bug fix that requires many changes, explain why in the PR description and tag a maintainer.`;
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                body: comment
+              });
+
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                labels: ['too-large', 'needs-splitting']
+              });
+
+              core.warning(`PR exceeds size limit: ${totalChanges} > ${maxLines} lines`);
+            } else {
+              console.log(`✅ PR size is acceptable: ${totalChanges} <= ${maxLines} lines`);
+
+              // Add size label
+              let sizeLabel = 'size/S';
+              if (totalChanges > 100) sizeLabel = 'size/M';
+              if (totalChanges > 50) sizeLabel = 'size/XS';
+
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                labels: [sizeLabel]
+              });
+            }

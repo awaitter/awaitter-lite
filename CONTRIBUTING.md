@@ -2,22 +2,101 @@
 
 **Thank you for your interest in Awaitter Lite!** ❤️
 
-However, this project is **NOT accepting external contributions** at this time.
+We welcome contributions! 🎉 **But we're very selective to maintain quality and vision.**
 
-## 📖 Why is the Code Public?
+---
 
-The source code is publicly available for:
+## ✅ What We Accept
 
-- ✅ **Transparency** - You can see exactly how Awaitter works
-- ✅ **Learning** - Study the implementation and architecture
-- ✅ **Trust** - Verify security and privacy practices
-- ✅ **Bug Discovery** - Help us identify issues
+### 🟢 High Priority (Fast Review)
 
-## ❌ What We're NOT Accepting
+- 🐛 **Bug Fixes** - Small, isolated fixes for reported issues
+- 📝 **Documentation** - Typos, clarifications, examples
+- 🌍 **Translations** - Help us reach more developers
+- ✅ **Tests** - Additional test coverage
 
-- **Pull Requests** - We handle all development internally
-- **Code Contributions** - Features and fixes are managed by our team
-- **Forks for Commercial Use** - See LICENSE for terms
+### 🟡 Medium Priority (Case-by-Case)
+
+- ✨ **Small Features** - Must align with our roadmap (ask first!)
+- ♻️ **Refactoring** - Only if significantly improves code quality
+- 🎨 **UI/UX** - Improvements to CLI interface
+
+### 🔴 What We DON'T Accept
+
+- 🚫 Large features without prior approval
+- 🚫 Breaking changes (unless critical)
+- 🚫 Style-only changes (we have our standards)
+- 🚫 Dependency updates (we handle these)
+- 🚫 Complete rewrites or major refactors
+
+---
+
+## 📋 Process (MUST FOLLOW)
+
+### Step 1: Open an Issue FIRST
+
+**⚠️ PRs without an approved Issue will be auto-closed**
+
+1. Search existing Issues to avoid duplicates
+2. Open a new Issue describing:
+   - The problem you're solving
+   - Your proposed solution
+   - Why it's important
+3. Wait for approval from maintainers (tag: `approved`)
+4. Only then start coding
+
+### Step 2: Keep it Small
+
+- ✅ Max **200 lines changed** per PR
+- ✅ **Single responsibility** - one thing at a time
+- ✅ **One commit** (we'll squash on merge anyway)
+
+Large changes? Split into multiple PRs.
+
+### Step 3: Quality Standards
+
+Your PR must:
+
+- ✅ **Pass all tests** - `npm test` must succeed
+- ✅ **Include types** - Full TypeScript typing
+- ✅ **No new dependencies** - Unless absolutely critical
+- ✅ **Update docs** - README/docs if behavior changes
+- ✅ **Follow style** - Use existing code style
+
+### Step 4: Submit PR
+
+Use our PR template (auto-filled) and:
+
+1. Link to the approved Issue
+2. Describe what you changed
+3. Explain how you tested it
+4. Be patient for review (1-7 days)
+
+### Step 5: Review Process
+
+- We may request changes
+- We may reject even good PRs (roadmap conflicts)
+- Don't take it personally - it's about project vision
+- We'll provide feedback to help you improve
+
+---
+
+## 🎁 Recognition & Rewards
+
+### For All Contributors:
+
+- 📛 Your name in README credits
+- 🏆 Contributor badge on GitHub
+- 🙏 Public thank you on Twitter
+
+### For Top Contributors (5+ merged PRs):
+
+- ⭐ Featured in release notes
+- 🎤 Shoutout in our social media
+- ☕ Free coffee on us (Ko-fi donation back!)
+- 🎫 Early access to Pro features
+
+---
 
 ## ✅ How You CAN Help
 

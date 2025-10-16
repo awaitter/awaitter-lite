@@ -701,12 +701,44 @@ MIT - Use freely in personal and commercial projects
 
 ---
 
-## 🤝 Support & Feedback
+## 🤝 Contributing
 
-Found a bug? Have an idea? We'd love to hear from you!
+**We welcome contributions!** 🎉
 
-**Contact Support:** support@awaitter.com
-**Website:** [awaitter.com/support](https://awaitter.com/support)
+Awaitter Lite is open to community contributions, but we're selective to maintain quality.
+
+### What We Accept:
+- 🐛 **Bug fixes** - Small, isolated fixes
+- 📝 **Documentation** - Typos, improvements, examples
+- 🌍 **Translations** - Help us reach more developers
+- ✅ **Tests** - Additional test coverage
+- ✨ **Small features** - Must align with roadmap (ask first!)
+
+### Process:
+1. **Open an Issue FIRST** - Describe what you want to fix/add
+2. **Wait for approval** - Maintainers will review and approve
+3. **Keep it small** - Max 200 lines changed
+4. **Submit PR** - Link to the approved issue
+
+⚠️ **PRs without approved Issues will be auto-closed**
+
+**Read full guidelines:** [CONTRIBUTING.md](https://github.com/awaitter/awaitter-lite/blob/main/CONTRIBUTING.md)
+
+### Recognition:
+- Your name in README credits
+- Shoutouts on social media
+- Early access to Pro features (top contributors)
+
+---
+
+## 🐛 Support & Feedback
+
+Found a bug? Have an idea?
+
+- 🐛 **Report bugs:** [Open an Issue](https://github.com/awaitter/awaitter-lite/issues/new?template=bug_report.md)
+- ✨ **Request features:** [Open an Issue](https://github.com/awaitter/awaitter-lite/issues/new?template=feature_request.md)
+- 📧 **Email:** support@awaitter.com
+- 🌐 **Website:** [awaitter.com/support](https://awaitter.com/support)
 
 ---
 
