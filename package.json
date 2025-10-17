@@ -1,6 +1,6 @@
 {
   "name": "awaitter-lite",
-  "version": "1.0.39",
+  "version": "1.0.40",
   "description": "Awaitter Lite - Multi-model AI coding assistant CLI supporting local LLMs, GPT-4, Claude, Gemini, and more",
   "main": "dist/index.js",
   "bin": {
@@ -32,11 +32,11 @@
     "anthropic",
     "openai",
     "code-assistant",
-    "source-available",
+    "open-source",
     "typescript"
   ],
   "author": "NovoLabs",
-  "license": "SEE LICENSE IN LICENSE",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/awaitter/awaitter-lite.git"

@@ -5,7 +5,7 @@
 **The AI coding assistant that NEVER loses track of your project**
 
 [![npm version](https://img.shields.io/npm/v/awaitter-lite.svg)](https://www.npmjs.com/package/awaitter-lite)
-[![License: Source Available](https://img.shields.io/badge/License-Source%20Available-blue.svg)](https://github.com/awaitter/awaitter-lite/blob/main/LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Downloads](https://img.shields.io/npm/dm/awaitter-lite.svg)](https://www.npmjs.com/package/awaitter-lite)
 [![GitHub](https://img.shields.io/github/stars/awaitter/awaitter-lite?style=social)](https://github.com/awaitter/awaitter-lite)
 
