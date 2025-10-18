@@ -33,6 +33,11 @@ export declare class Config {
     private configPath?;
     constructor(configPath?: string);
     private getDefaults;
+    /**
+     * Migrate existing config to add new models from defaults
+     * Preserves user's API keys and settings
+     */
+    private migrateConfig;
     load(): Promise<void>;
     get<K extends keyof ConfigData>(key: K, defaultValue?: ConfigData[K]): ConfigData[K];
     set<K extends keyof ConfigData>(key: K, value: ConfigData[K]): void;

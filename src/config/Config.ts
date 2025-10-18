@@ -46,6 +46,9 @@ export class Config {
       projectName: 'awaitter-lite',
       defaults: this.getDefaults(),
     });
+
+    // Auto-migrate configuration to add new models
+    this.migrateConfig();
   }
 
   private getDefaults(): ConfigData {
@@ -311,6 +314,30 @@ export class Config {
         autoApproveSimpleTasks: true, // Simple tasks don't need roadmaps
       },
     };
+  }
+
+  /**
+   * Migrate existing config to add new models from defaults
+   * Preserves user's API keys and settings
+   */
+  private migrateConfig() {
+    const currentModels = this.conf.get('models');
+    const defaultModels = this.getDefaults().models;
+
+    let updated = false;
+
+    // Add new models from defaults that don't exist in current config
+    for (const [modelName, modelConfig] of Object.entries(defaultModels)) {
+      if (!currentModels[modelName]) {
+        currentModels[modelName] = modelConfig;
+        updated = true;
+      }
+    }
+
+    // Save if we added new models
+    if (updated) {
+      this.conf.set('models', currentModels);
+    }
   }
 
   async load() {
