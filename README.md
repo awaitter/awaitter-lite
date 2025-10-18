@@ -332,20 +332,41 @@ Executes one task, pauses. You approve each step.
 
 ---
 
-## 🤖 Supported Models (20+ Models)
+## 🤖 Supported Models (30+ Models!)
 
 ### 🏠 Local Models (Free - Runs on Your PC via Ollama)
 
 **✨ Benefits: Unlimited tokens • 100% private • Zero cost • Works offline**
 
-| Model | Parameters | Context | Quality | RAM Required |
-|-------|------------|---------|---------|--------------|
-| Qwen 2.5 Coder 1.5B | 1.5B | 4K | ⭐⭐⭐ | 4GB+ |
-| Qwen 2.5 Coder 7B | 7B | 8K | ⭐⭐⭐⭐ | 8GB+ |
-| Qwen 2.5 Coder 14B | 14B | 8K | ⭐⭐⭐⭐ | 16GB+ |
-| Qwen 2.5 Coder 32B | 32B | 16K | ⭐⭐⭐⭐⭐ | 32GB+ |
-| DeepSeek Coder v2 16B | 16B | 16K | ⭐⭐⭐⭐ | 16GB+ |
-| Codestral 22B | 22B | 32K | ⭐⭐⭐⭐⭐ | 24GB+ |
+#### Qwen 2.5 Coder Series (Specialized for Coding)
+| Model | Parameters | Context | Quality | RAM Required | Command |
+|-------|------------|---------|---------|--------------|---------|
+| Qwen 2.5 Coder 0.5B | 0.5B | 4K | ⭐⭐ | 2GB+ | `aw --model qwen-0.5b` |
+| Qwen 2.5 Coder 1.5B | 1.5B | 4K | ⭐⭐⭐ | 4GB+ | `aw --model qwen-1.5b` |
+| Qwen 2.5 Coder 3B | 3B | 8K | ⭐⭐⭐ | 4GB+ | `aw --model qwen-3b` |
+| Qwen 2.5 Coder 7B | 7B | 8K | ⭐⭐⭐⭐ | 8GB+ | `aw --model qwen-7b` |
+| Qwen 2.5 Coder 14B | 14B | 8K | ⭐⭐⭐⭐ | 16GB+ | `aw --model qwen-14b` |
+| Qwen 2.5 Coder 32B | 32B | 16K | ⭐⭐⭐⭐⭐ | 32GB+ | `aw --model qwen-32b` |
+
+#### Qwen 3 Series (NEW - January 2025, General Purpose)
+| Model | Parameters | Context | Quality | RAM Required | Command |
+|-------|------------|---------|---------|--------------|---------|
+| Qwen 3 1.7B | 1.7B | 8K | ⭐⭐⭐ | 2GB+ | `aw --model qwen3-1.7b` |
+| Qwen 3 4B | 4B | 8K | ⭐⭐⭐⭐ | 4GB+ | `aw --model qwen3-4b` |
+| Qwen 3 14B | 14B | 16K | ⭐⭐⭐⭐⭐ | 16GB+ | `aw --model qwen3-14b` |
+| **Qwen 3 30B ⭐** | 30B | 16K | ⭐⭐⭐⭐⭐ | 24GB+ | `aw --model qwen3-30b` |
+| Qwen 3 70B | 70B | 32K | ⭐⭐⭐⭐⭐ | 48GB+ | `aw --model qwen3-70b` |
+
+**✨ Recommended:** **Qwen 3 30B** is the best local model as of January 2025 - better quality than Qwen 2.5 Coder 32B with similar size!
+
+#### Other Excellent Local Models
+| Model | Parameters | Context | Quality | RAM Required | Command |
+|-------|------------|---------|---------|--------------|---------|
+| Llama 3.3 70B | 70B | 8K | ⭐⭐⭐⭐⭐ | 48GB+ | `aw --model llama-70b` |
+| DeepSeek Coder V2 | 16B | 16K | ⭐⭐⭐⭐ | 16GB+ | `aw --model deepseek` |
+| DeepSeek V3 | 671B | 64K | ⭐⭐⭐⭐⭐ | 300GB+ | `aw --model deepseek-v3` |
+| Mistral Nemo | 12B | 128K | ⭐⭐⭐⭐ | 12GB+ | `aw --model mistral-nemo` |
+| Codestral | 22B | 32K | ⭐⭐⭐⭐⭐ | 24GB+ | `aw --model codestral` |
 
 ### ☁️ Cloud APIs
 

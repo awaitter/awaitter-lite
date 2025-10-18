@@ -52,11 +52,17 @@ export class Config {
     return {
       defaultModel: 'local',
       models: {
-        // Local models (unlimited use with Ollama)
+        // Local models (unlimited use with Ollama) - Qwen 2.5 Coder
         local: {
           type: 'local',
           url: process.env.LOCAL_LLM_URL || 'http://localhost:11434',
           model: 'qwen2.5-coder:1.5b',
+          maxTokens: 4096,
+        },
+        'qwen-0.5b': {
+          type: 'local',
+          url: process.env.LOCAL_LLM_URL || 'http://localhost:11434',
+          model: 'qwen2.5-coder:0.5b',
           maxTokens: 4096,
         },
         'qwen-1.5b': {
@@ -64,6 +70,12 @@ export class Config {
           url: process.env.LOCAL_LLM_URL || 'http://localhost:11434',
           model: 'qwen2.5-coder:1.5b',
           maxTokens: 4096,
+        },
+        'qwen-3b': {
+          type: 'local',
+          url: process.env.LOCAL_LLM_URL || 'http://localhost:11434',
+          model: 'qwen2.5-coder:3b',
+          maxTokens: 8192,
         },
         'qwen-7b': {
           type: 'local',
@@ -83,16 +95,68 @@ export class Config {
           model: 'qwen2.5-coder:32b',
           maxTokens: 16384,
         },
+
+        // Qwen 3 Series (NEW - January 2025)
+        'qwen3-1.7b': {
+          type: 'local',
+          url: process.env.LOCAL_LLM_URL || 'http://localhost:11434',
+          model: 'qwen3:1.7b',
+          maxTokens: 8192,
+        },
+        'qwen3-4b': {
+          type: 'local',
+          url: process.env.LOCAL_LLM_URL || 'http://localhost:11434',
+          model: 'qwen3:4b',
+          maxTokens: 8192,
+        },
+        'qwen3-14b': {
+          type: 'local',
+          url: process.env.LOCAL_LLM_URL || 'http://localhost:11434',
+          model: 'qwen3:14b',
+          maxTokens: 16384,
+        },
+        'qwen3-30b': {
+          type: 'local',
+          url: process.env.LOCAL_LLM_URL || 'http://localhost:11434',
+          model: 'qwen3:30b',
+          maxTokens: 16384,
+        },
+        'qwen3-70b': {
+          type: 'local',
+          url: process.env.LOCAL_LLM_URL || 'http://localhost:11434',
+          model: 'qwen3:70b',
+          maxTokens: 32768,
+        },
+
+        // Other Local Models
         'deepseek': {
           type: 'local',
           url: process.env.LOCAL_LLM_URL || 'http://localhost:11434',
           model: 'deepseek-coder-v2:16b',
           maxTokens: 16384,
         },
+        'deepseek-v3': {
+          type: 'local',
+          url: process.env.LOCAL_LLM_URL || 'http://localhost:11434',
+          model: 'deepseek-v3',
+          maxTokens: 32768,
+        },
         'codestral': {
           type: 'local',
           url: process.env.LOCAL_LLM_URL || 'http://localhost:11434',
           model: 'codestral:22b',
+          maxTokens: 32768,
+        },
+        'llama-70b': {
+          type: 'local',
+          url: process.env.LOCAL_LLM_URL || 'http://localhost:11434',
+          model: 'llama3.3:70b-instruct',
+          maxTokens: 8192,
+        },
+        'mistral-nemo': {
+          type: 'local',
+          url: process.env.LOCAL_LLM_URL || 'http://localhost:11434',
+          model: 'mistral-nemo:12b',
           maxTokens: 32768,
         },
 

@@ -186,7 +186,34 @@ export const MODEL_CONFIGS: Record<string, ModelConfig> = {
     stopSequences: ['<|endoftext|>', '<|im_end|>', '</s>']
   },
 
-  // Qwen2.5-Coder 7B: Good for basic coding, runs on 8GB GPU
+  // Qwen 2.5 Coder Series
+  'qwen-0.5b': {
+    temperature: 0.25,
+    maxTokens: 4096,
+    topP: 0.9,
+    frequencyPenalty: 0.15,
+    presencePenalty: 0.1,
+    stopSequences: ['<|im_end|>', '<|endoftext|>']
+  },
+
+  'qwen-1.5b': {
+    temperature: 0.2,
+    maxTokens: 4096,
+    topP: 0.9,
+    frequencyPenalty: 0.15,
+    presencePenalty: 0.1,
+    stopSequences: ['<|im_end|>', '<|endoftext|>']
+  },
+
+  'qwen-3b': {
+    temperature: 0.2,
+    maxTokens: 8192,
+    topP: 0.9,
+    frequencyPenalty: 0.1,
+    presencePenalty: 0.1,
+    stopSequences: ['<|im_end|>', '<|endoftext|>']
+  },
+
   'qwen-7b': {
     temperature: 0.2,
     maxTokens: 8192,
@@ -196,7 +223,6 @@ export const MODEL_CONFIGS: Record<string, ModelConfig> = {
     stopSequences: ['<|im_end|>', '<|endoftext|>', '<|im_start|>']
   },
 
-  // Qwen2.5-Coder 14B: Better quality, needs 16GB GPU
   'qwen-14b': {
     temperature: 0.2,
     maxTokens: 8192,
@@ -206,7 +232,6 @@ export const MODEL_CONFIGS: Record<string, ModelConfig> = {
     stopSequences: ['<|im_end|>', '<|endoftext|>', '<|im_start|>']
   },
 
-  // Qwen2.5-Coder 32B: Best quality, needs 24GB+ GPU
   'qwen-32b': {
     temperature: 0.2,
     maxTokens: 16384,
@@ -214,6 +239,80 @@ export const MODEL_CONFIGS: Record<string, ModelConfig> = {
     frequencyPenalty: 0.05,
     presencePenalty: 0.05,
     stopSequences: ['<|im_end|>', '<|endoftext|>', '<|im_start|>']
+  },
+
+  // Qwen 3 Series (NEW - January 2025)
+  'qwen3-1.7b': {
+    temperature: 0.2,
+    maxTokens: 8192,
+    topP: 0.9,
+    frequencyPenalty: 0.1,
+    presencePenalty: 0.1,
+    stopSequences: ['<|im_end|>', '<|endoftext|>']
+  },
+
+  'qwen3-4b': {
+    temperature: 0.2,
+    maxTokens: 8192,
+    topP: 0.9,
+    frequencyPenalty: 0.1,
+    presencePenalty: 0.1,
+    stopSequences: ['<|im_end|>', '<|endoftext|>']
+  },
+
+  'qwen3-14b': {
+    temperature: 0.2,
+    maxTokens: 16384,
+    topP: 0.9,
+    frequencyPenalty: 0.08,
+    presencePenalty: 0.08,
+    stopSequences: ['<|im_end|>', '<|endoftext|>']
+  },
+
+  'qwen3-30b': {
+    temperature: 0.2,
+    maxTokens: 16384,
+    topP: 0.9,
+    frequencyPenalty: 0.05,
+    presencePenalty: 0.05,
+    stopSequences: ['<|im_end|>', '<|endoftext|>']
+  },
+
+  'qwen3-70b': {
+    temperature: 0.2,
+    maxTokens: 32768,
+    topP: 0.95,
+    frequencyPenalty: 0.05,
+    presencePenalty: 0.05,
+    stopSequences: ['<|im_end|>', '<|endoftext|>']
+  },
+
+  // Other Local Models
+  'llama-70b': {
+    temperature: 0.3,
+    maxTokens: 8192,
+    topP: 0.95,
+    frequencyPenalty: 0.1,
+    presencePenalty: 0.1,
+    stopSequences: ['<|end_of_text|>', '</s>']
+  },
+
+  'mistral-nemo': {
+    temperature: 0.2,
+    maxTokens: 32768,
+    topP: 0.95,
+    frequencyPenalty: 0.1,
+    presencePenalty: 0.1,
+    stopSequences: ['</s>', '[INST]']
+  },
+
+  'deepseek-v3': {
+    temperature: 0.2,
+    maxTokens: 32768,
+    topP: 0.95,
+    frequencyPenalty: 0.05,
+    presencePenalty: 0.05,
+    stopSequences: ['<|EOT|>', '<｜end▁of▁sentence｜>']
   },
 
   // DeepSeek-Coder: Alternative to Qwen, excellent for code

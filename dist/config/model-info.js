@@ -7,10 +7,10 @@ exports.MODEL_INFO = void 0;
 exports.getModelInfo = getModelInfo;
 exports.getAllModelInfo = getAllModelInfo;
 exports.MODEL_INFO = {
-    // Local Models (Ollama)
+    // Local Models (Ollama) - Qwen 2.5 Coder Series
     'local': {
         name: 'local',
-        displayName: 'Qwen 1.5B',
+        displayName: 'Qwen 2.5 Coder 1.5B',
         provider: 'Ollama',
         contextWindow: 4096,
         cost: 'Free',
@@ -19,10 +19,22 @@ exports.MODEL_INFO = {
         rateLimit: 'Unlimited',
         useCase: 'Learning, small projects',
         notes: 'Requires 2GB RAM'
+    },
+    'qwen-0.5b': {
+        name: 'qwen-0.5b',
+        displayName: 'Qwen 2.5 Coder 0.5B',
+        provider: 'Ollama',
+        contextWindow: 4096,
+        cost: 'Free',
+        speed: 'fast',
+        quality: 'fair',
+        rateLimit: 'Unlimited',
+        useCase: 'Very lightweight, testing',
+        notes: 'Requires 1GB RAM'
     },
     'qwen-1.5b': {
         name: 'qwen-1.5b',
-        displayName: 'Qwen 1.5B',
+        displayName: 'Qwen 2.5 Coder 1.5B',
         provider: 'Ollama',
         contextWindow: 4096,
         cost: 'Free',
@@ -32,9 +44,21 @@ exports.MODEL_INFO = {
         useCase: 'Learning, small projects',
         notes: 'Requires 2GB RAM'
     },
+    'qwen-3b': {
+        name: 'qwen-3b',
+        displayName: 'Qwen 2.5 Coder 3B',
+        provider: 'Ollama',
+        contextWindow: 8192,
+        cost: 'Free',
+        speed: 'medium',
+        quality: 'good',
+        rateLimit: 'Unlimited',
+        useCase: 'Good balance for laptops',
+        notes: 'Requires 4GB RAM'
+    },
     'qwen-7b': {
         name: 'qwen-7b',
-        displayName: 'Qwen 7B',
+        displayName: 'Qwen 2.5 Coder 7B',
         provider: 'Ollama',
         contextWindow: 8192,
         cost: 'Free',
@@ -46,7 +70,7 @@ exports.MODEL_INFO = {
     },
     'qwen-14b': {
         name: 'qwen-14b',
-        displayName: 'Qwen 14B',
+        displayName: 'Qwen 2.5 Coder 14B',
         provider: 'Ollama',
         contextWindow: 8192,
         cost: 'Free',
@@ -58,7 +82,7 @@ exports.MODEL_INFO = {
     },
     'qwen-32b': {
         name: 'qwen-32b',
-        displayName: 'Qwen 32B',
+        displayName: 'Qwen 2.5 Coder 32B',
         provider: 'Ollama',
         contextWindow: 16384,
         cost: 'Free',
@@ -68,9 +92,71 @@ exports.MODEL_INFO = {
         useCase: 'Production, complex tasks',
         notes: 'Requires 32GB RAM'
     },
+    // Qwen 3 Series (NEW - January 2025)
+    'qwen3-1.7b': {
+        name: 'qwen3-1.7b',
+        displayName: 'Qwen 3 1.7B',
+        provider: 'Ollama',
+        contextWindow: 8192,
+        cost: 'Free',
+        speed: 'medium',
+        quality: 'good',
+        rateLimit: 'Unlimited',
+        useCase: 'Fast general purpose',
+        notes: 'Requires 2GB RAM, faster than 2.5'
+    },
+    'qwen3-4b': {
+        name: 'qwen3-4b',
+        displayName: 'Qwen 3 4B',
+        provider: 'Ollama',
+        contextWindow: 8192,
+        cost: 'Free',
+        speed: 'medium',
+        quality: 'very-good',
+        rateLimit: 'Unlimited',
+        useCase: 'Balanced performance',
+        notes: 'Requires 4GB RAM'
+    },
+    'qwen3-14b': {
+        name: 'qwen3-14b',
+        displayName: 'Qwen 3 14B',
+        provider: 'Ollama',
+        contextWindow: 16384,
+        cost: 'Free',
+        speed: 'slow',
+        quality: 'excellent',
+        rateLimit: 'Unlimited',
+        useCase: 'High quality tasks',
+        notes: 'Requires 16GB RAM'
+    },
+    'qwen3-30b': {
+        name: 'qwen3-30b',
+        displayName: 'Qwen 3 30B ⭐',
+        provider: 'Ollama',
+        contextWindow: 16384,
+        cost: 'Free',
+        speed: 'slow',
+        quality: 'excellent',
+        rateLimit: 'Unlimited',
+        useCase: 'Best local model (Jan 2025)',
+        notes: 'Requires 24GB RAM, recommended'
+    },
+    'qwen3-70b': {
+        name: 'qwen3-70b',
+        displayName: 'Qwen 3 70B',
+        provider: 'Ollama',
+        contextWindow: 32768,
+        cost: 'Free',
+        speed: 'slow',
+        quality: 'excellent',
+        rateLimit: 'Unlimited',
+        useCase: 'Maximum quality, workstations',
+        notes: 'Requires 48GB RAM'
+    },
+    // Other Local Models
     'deepseek': {
         name: 'deepseek',
-        displayName: 'DeepSeek 16B',
+        displayName: 'DeepSeek Coder V2 16B',
         provider: 'Ollama',
         contextWindow: 16384,
         cost: 'Free',
@@ -79,6 +165,18 @@ exports.MODEL_INFO = {
         rateLimit: 'Unlimited',
         useCase: 'Code-focused tasks',
         notes: 'Requires 16GB RAM'
+    },
+    'deepseek-v3': {
+        name: 'deepseek-v3',
+        displayName: 'DeepSeek V3 671B',
+        provider: 'Ollama',
+        contextWindow: 65536,
+        cost: 'Free',
+        speed: 'slow',
+        quality: 'excellent',
+        rateLimit: 'Unlimited',
+        useCase: 'Extreme quality (if you have GPU)',
+        notes: 'Requires 300GB+ VRAM (datacenter)'
     },
     'codestral': {
         name: 'codestral',
@@ -91,6 +189,30 @@ exports.MODEL_INFO = {
         rateLimit: 'Unlimited',
         useCase: 'Advanced coding tasks',
         notes: 'Requires 24GB RAM'
+    },
+    'llama-70b': {
+        name: 'llama-70b',
+        displayName: 'Llama 3.3 70B Instruct',
+        provider: 'Ollama',
+        contextWindow: 8192,
+        cost: 'Free',
+        speed: 'slow',
+        quality: 'excellent',
+        rateLimit: 'Unlimited',
+        useCase: 'General purpose, excellent',
+        notes: 'Requires 48GB RAM'
+    },
+    'mistral-nemo': {
+        name: 'mistral-nemo',
+        displayName: 'Mistral Nemo 12B',
+        provider: 'Ollama',
+        contextWindow: 131072,
+        cost: 'Free',
+        speed: 'medium',
+        quality: 'very-good',
+        rateLimit: 'Unlimited',
+        useCase: 'Large context window',
+        notes: 'Requires 12GB RAM'
     },
     // OpenAI Models
     'gpt4': {
