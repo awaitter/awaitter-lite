@@ -15,7 +15,10 @@ export class GitCommitTool implements Tool {
     },
     files: {
       type: 'array',
-      description: 'Specific files to stage and commit (default: all changes)'
+      description: 'Specific files to stage and commit (default: all changes)',
+      items: {
+        type: 'string'
+      }
     },
     amend: {
       type: 'boolean',

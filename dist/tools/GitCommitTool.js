@@ -16,7 +16,10 @@ class GitCommitTool {
         },
         files: {
             type: 'array',
-            description: 'Specific files to stage and commit (default: all changes)'
+            description: 'Specific files to stage and commit (default: all changes)',
+            items: {
+                type: 'string'
+            }
         },
         amend: {
             type: 'boolean',

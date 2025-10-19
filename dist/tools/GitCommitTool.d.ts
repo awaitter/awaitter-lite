@@ -13,6 +13,9 @@ export declare class GitCommitTool implements Tool {
         files: {
             type: string;
             description: string;
+            items: {
+                type: string;
+            };
         };
         amend: {
             type: string;
