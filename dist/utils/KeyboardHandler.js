@@ -2,32 +2,29 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.KeyboardHandler = void 0;
 /**
- * Handles keyboard input for aborting operations with ESC key
+ * Handles keyboard input for aborting operations with Ctrl+C.
+ *
+ * NOTE: Raw mode (setRawMode) is intentionally NOT used here.
+ * Toggling raw mode while readline is active causes readline to emit
+ * 'close', which triggers process.exit(0). Instead, we use SIGINT
+ * which works correctly alongside readline without any side effects.
  */
 class KeyboardHandler {
     static isListening = false;
     static abortCallback = null;
-    static originalRawMode;
     /**
-     * Start listening for ESC key press
+     * Start listening for Ctrl+C (SIGINT) to abort operations
      */
     static startListening(onAbort) {
         if (this.isListening) {
-            return; // Already listening
+            return;
         }
         this.abortCallback = onAbort;
         this.isListening = true;
-        // Enable raw mode to capture individual keystrokes
-        if (process.stdin.isTTY) {
-            this.originalRawMode = process.stdin.isRaw;
-            process.stdin.setRawMode(true);
-            process.stdin.resume();
-            // Listen for keypress
-            process.stdin.on('data', this.handleKeypress);
-        }
+        process.once('SIGINT', KeyboardHandler.handleSigInt);
     }
     /**
-     * Stop listening for ESC key press
+     * Stop listening for abort signals
      */
     static stopListening() {
         if (!this.isListening) {
@@ -35,33 +32,16 @@ class KeyboardHandler {
         }
         this.isListening = false;
         this.abortCallback = null;
-        // Restore original mode
-        if (process.stdin.isTTY) {
-            process.stdin.removeListener('data', this.handleKeypress);
-            process.stdin.setRawMode(this.originalRawMode || false);
-            // Don't pause stdin, keep it ready for next input
-            // process.stdin.pause();
-        }
+        process.removeListener('SIGINT', KeyboardHandler.handleSigInt);
     }
     /**
-     * Handle keypress events
+     * Handle SIGINT (Ctrl+C) — abort current operation without exiting
      */
-    static handleKeypress = (buffer) => {
-        const key = buffer.toString('utf8');
-        const code = buffer[0];
-        // ESC key has code 27
-        if (code === 27) {
-            // Call the abort callback
-            if (this.abortCallback) {
-                this.abortCallback();
-            }
+    static handleSigInt = () => {
+        if (KeyboardHandler.abortCallback) {
+            KeyboardHandler.abortCallback();
         }
-        // Ctrl+C should also work (code 3)
-        if (code === 3) {
-            if (this.abortCallback) {
-                this.abortCallback();
-            }
-        }
+        // Do NOT call process.exit — let the agent loop handle abort gracefully
     };
     /**
      * Check if currently listening

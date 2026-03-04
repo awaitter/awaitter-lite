@@ -9,6 +9,7 @@ const GlobTool_1 = require("./GlobTool");
 const GrepTool_1 = require("./GrepTool");
 const GitStatusTool_1 = require("./GitStatusTool");
 const GitDiffTool_1 = require("./GitDiffTool");
+const GitAddTool_1 = require("./GitAddTool");
 const GitCommitTool_1 = require("./GitCommitTool");
 const GitBranchTool_1 = require("./GitBranchTool");
 const GitLogTool_1 = require("./GitLogTool");
@@ -42,13 +43,15 @@ class ToolManager {
             GrepTool_1.GrepTool,
             GitStatusTool_1.GitStatusTool,
             GitDiffTool_1.GitDiffTool,
+            GitAddTool_1.GitAddTool,
             GitCommitTool_1.GitCommitTool,
             GitBranchTool_1.GitBranchTool,
             GitLogTool_1.GitLogTool
         ];
         for (const ToolClass of standardToolClasses) {
             const tool = new ToolClass(this.workingDir, this.config);
-            if (toolConfig[tool.name]) {
+            // Enable tool if explicitly true, OR if not present in saved config (new tool default = enabled)
+            if (toolConfig[tool.name] !== false) {
                 this.tools.set(tool.name, tool);
             }
         }

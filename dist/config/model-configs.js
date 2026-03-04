@@ -16,14 +16,16 @@ exports.MODEL_CONFIGS = {
         topP: 0.95,
         frequencyPenalty: 0.1,
         presencePenalty: 0.1,
-        stopSequences: []
+        stopSequences: [],
+        contextWindow: 128000
     },
     'gpt4-turbo': {
         temperature: 0.3,
         maxTokens: 4096,
         topP: 0.95,
         frequencyPenalty: 0.1,
-        presencePenalty: 0.1
+        presencePenalty: 0.1,
+        contextWindow: 128000
     },
     // GPT-3.5: Faster, good for simple tasks
     'gpt35': {
@@ -31,7 +33,8 @@ exports.MODEL_CONFIGS = {
         maxTokens: 4000,
         topP: 0.9,
         frequencyPenalty: 0.2,
-        presencePenalty: 0.1
+        presencePenalty: 0.1,
+        contextWindow: 16385
     },
     // O1: Advanced reasoning model
     'o1': {
@@ -39,43 +42,50 @@ exports.MODEL_CONFIGS = {
         maxTokens: 8192,
         topP: 0.95,
         frequencyPenalty: 0.05,
-        presencePenalty: 0.05
+        presencePenalty: 0.05,
+        contextWindow: 200000
     },
     // ============ ANTHROPIC MODELS ============
     // Claude Sonnet 4.5: Excellent at following instructions methodically
     'claude': {
         temperature: 0.4,
         maxTokens: 8192,
-        topP: 0.95
+        topP: 0.95,
+        contextWindow: 200000
     },
     'claude-sonnet': {
         temperature: 0.4,
         maxTokens: 8192,
-        topP: 0.95
+        topP: 0.95,
+        contextWindow: 200000
     },
     // Claude Opus: Most capable for complex tasks
     'claude-opus': {
         temperature: 0.3,
         maxTokens: 4096,
-        topP: 0.95
+        topP: 0.95,
+        contextWindow: 200000
     },
     // ============ GOOGLE MODELS ============
     // Gemini 2.0 Flash: Fast and efficient
     'gemini': {
         temperature: 0.3,
         maxTokens: 8192,
-        topP: 0.95
+        topP: 0.95,
+        contextWindow: 1000000
     },
     'gemini-flash': {
         temperature: 0.3,
         maxTokens: 8192,
-        topP: 0.95
+        topP: 0.95,
+        contextWindow: 1000000
     },
     // Gemini Pro: More capable version
     'gemini-pro': {
         temperature: 0.3,
         maxTokens: 8192,
-        topP: 0.95
+        topP: 0.95,
+        contextWindow: 2000000
     },
     // ============ XAI MODELS (GROK) ============
     // Grok: xAI's model
@@ -84,14 +94,16 @@ exports.MODEL_CONFIGS = {
         maxTokens: 8192,
         topP: 0.95,
         frequencyPenalty: 0.1,
-        presencePenalty: 0.1
+        presencePenalty: 0.1,
+        contextWindow: 131072
     },
     'grok-2': {
         temperature: 0.3,
         maxTokens: 8192,
         topP: 0.95,
         frequencyPenalty: 0.1,
-        presencePenalty: 0.1
+        presencePenalty: 0.1,
+        contextWindow: 131072
     },
     // ============ GROQ MODELS (GRATIS Y ULTRA RÁPIDO) ============
     // Groq Llama 3.1 70B: Excelente calidad, 500+ tokens/seg
@@ -100,14 +112,16 @@ exports.MODEL_CONFIGS = {
         maxTokens: 8192,
         topP: 0.95,
         frequencyPenalty: 0.1,
-        presencePenalty: 0.1
+        presencePenalty: 0.1,
+        contextWindow: 131072
     },
     'groq-llama': {
         temperature: 0.3,
         maxTokens: 8192,
         topP: 0.95,
         frequencyPenalty: 0.1,
-        presencePenalty: 0.1
+        presencePenalty: 0.1,
+        contextWindow: 131072
     },
     // Groq Qwen 2.5 Coder 32B: Especializado en código
     'groq-qwen': {
@@ -115,7 +129,8 @@ exports.MODEL_CONFIGS = {
         maxTokens: 8192,
         topP: 0.95,
         frequencyPenalty: 0.1,
-        presencePenalty: 0.1
+        presencePenalty: 0.1,
+        contextWindow: 32768
     },
     // Groq Mixtral: Modelo grande, 32k context
     'groq-mixtral': {
@@ -123,7 +138,8 @@ exports.MODEL_CONFIGS = {
         maxTokens: 32768,
         topP: 0.95,
         frequencyPenalty: 0.1,
-        presencePenalty: 0.1
+        presencePenalty: 0.1,
+        contextWindow: 32768
     },
     // ============ DEEPSEEK MODELS (MUY BARATO) ============
     // DeepSeek Coder: Especializado en código, $0.14/1M tokens
@@ -132,14 +148,16 @@ exports.MODEL_CONFIGS = {
         maxTokens: 16384,
         topP: 0.95,
         frequencyPenalty: 0.1,
-        presencePenalty: 0.1
+        presencePenalty: 0.1,
+        contextWindow: 65536
     },
     'deepseek-chat': {
         temperature: 0.3,
         maxTokens: 16384,
         topP: 0.95,
         frequencyPenalty: 0.1,
-        presencePenalty: 0.1
+        presencePenalty: 0.1,
+        contextWindow: 65536
     },
     // ============ LOCAL MODELS (UNLIMITED USE) ============
     // Generic local model fallback
@@ -149,7 +167,8 @@ exports.MODEL_CONFIGS = {
         topP: 0.9,
         frequencyPenalty: 0.15,
         presencePenalty: 0.1,
-        stopSequences: ['<|endoftext|>', '<|im_end|>', '</s>']
+        stopSequences: ['<|endoftext|>', '<|im_end|>', '</s>'],
+        contextWindow: 8192
     },
     // Qwen2.5-Coder 7B: Good for basic coding, runs on 8GB GPU
     'qwen-7b': {
@@ -158,7 +177,8 @@ exports.MODEL_CONFIGS = {
         topP: 0.9,
         frequencyPenalty: 0.1,
         presencePenalty: 0.1,
-        stopSequences: ['<|im_end|>', '<|endoftext|>', '<|im_start|>']
+        stopSequences: ['<|im_end|>', '<|endoftext|>', '<|im_start|>'],
+        contextWindow: 32768
     },
     // Qwen2.5-Coder 14B: Better quality, needs 16GB GPU
     'qwen-14b': {
@@ -167,7 +187,8 @@ exports.MODEL_CONFIGS = {
         topP: 0.9,
         frequencyPenalty: 0.1,
         presencePenalty: 0.1,
-        stopSequences: ['<|im_end|>', '<|endoftext|>', '<|im_start|>']
+        stopSequences: ['<|im_end|>', '<|endoftext|>', '<|im_start|>'],
+        contextWindow: 32768
     },
     // Qwen2.5-Coder 32B: Best quality, needs 24GB+ GPU
     'qwen-32b': {
@@ -176,7 +197,8 @@ exports.MODEL_CONFIGS = {
         topP: 0.9,
         frequencyPenalty: 0.05,
         presencePenalty: 0.05,
-        stopSequences: ['<|im_end|>', '<|endoftext|>', '<|im_start|>']
+        stopSequences: ['<|im_end|>', '<|endoftext|>', '<|im_start|>'],
+        contextWindow: 131072
     },
     // DeepSeek-Coder: Alternative to Qwen, excellent for code
     'deepseek': {
@@ -185,13 +207,15 @@ exports.MODEL_CONFIGS = {
         topP: 0.95,
         frequencyPenalty: 0.1,
         presencePenalty: 0.1,
-        stopSequences: ['<|EOT|>', '<｜end▁of▁sentence｜>']
+        stopSequences: ['<|EOT|>', '<｜end▁of▁sentence｜>'],
+        contextWindow: 65536
     },
     'deepseek-coder': {
         temperature: 0.2,
         maxTokens: 16384,
         topP: 0.95,
-        stopSequences: ['<|EOT|>']
+        stopSequences: ['<|EOT|>'],
+        contextWindow: 65536
     },
     // Codestral: Mistral's code model, very capable
     'codestral': {
@@ -200,20 +224,23 @@ exports.MODEL_CONFIGS = {
         topP: 0.95,
         frequencyPenalty: 0.1,
         presencePenalty: 0.1,
-        stopSequences: ['</s>', '[INST]', '[/INST]']
+        stopSequences: ['</s>', '[INST]', '[/INST]'],
+        contextWindow: 32768
     },
     // Generic Qwen fallback
     'qwen': {
         temperature: 0.2,
         maxTokens: 8192,
         topP: 0.9,
-        stopSequences: ['<|im_end|>', '<|endoftext|>']
+        stopSequences: ['<|im_end|>', '<|endoftext|>'],
+        contextWindow: 32768
     },
     'qwen-coder': {
         temperature: 0.2,
         maxTokens: 8192,
         topP: 0.9,
-        stopSequences: ['<|im_end|>', '<|endoftext|>']
+        stopSequences: ['<|im_end|>', '<|endoftext|>'],
+        contextWindow: 32768
     }
 };
 /**

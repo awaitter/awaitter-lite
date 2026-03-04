@@ -82,7 +82,8 @@ class UIHelper {
         this.spinner = (0, ora_1.default)({
             text: spinnerText,
             color: 'yellow',
-            spinner: 'dots'
+            spinner: 'dots',
+            discardStdin: false // Prevent ora from closing stdin (which drains the event loop)
         }).start();
     }
     /**

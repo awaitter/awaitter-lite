@@ -22,8 +22,16 @@ export class RoadmapPlanner {
       'full-stack', 'fullstack', 'frontend and backend', 'front y back',
       'web app', 'web application', 'aplicación web',
 
+      // APIs and services
+      'rest api', 'restful api', 'graphql api', 'rest service',
+      'microservice', 'microservices',
+
+      // Auth & security (always complex)
+      'oauth', 'jwt', 'authentication system', 'with authentication',
+      'role-based access', 'access control',
+
       // Major refactors
-      'refactor entire', 'refactor all', 'refactorizar todo',
+      'refactor entire', 'refactor the entire', 'refactor all', 'refactorizar todo',
       'restructure', 'reorganize', 'reestructurar',
 
       // Analysis of large codebases

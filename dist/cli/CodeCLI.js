@@ -44,6 +44,7 @@ const ModelManager_1 = require("../models/ModelManager");
 const UIHelper_1 = require("../utils/UIHelper");
 const HardwareDetector_1 = require("../utils/HardwareDetector");
 const model_info_1 = require("../config/model-info");
+const Orchestrator_1 = require("../multiagent/Orchestrator");
 const readline = __importStar(require("readline"));
 class CodeCLI {
     config;
@@ -57,6 +58,98 @@ class CodeCLI {
     ignoreNextClose = false;
     ignoreNextLine = false;
     commandInProgress = false;
+    isShuttingDown = false;
+    // Extracted as arrow property so it can be re-attached after readline recreation
+    lineHandler = async (line) => {
+        if (this.ignoreNextLine) {
+            this.ignoreNextLine = false;
+            return;
+        }
+        const input = line.trim();
+        if (!input) {
+            this.showPrompt();
+            return;
+        }
+        this.clearStatusLine();
+        if (input.startsWith('/')) {
+            if (this.commandInProgress)
+                return;
+            this.commandInProgress = true;
+            try {
+                await this.handleCommand(input);
+            }
+            finally {
+                this.commandInProgress = false;
+            }
+            console.log();
+            this.showPrompt();
+            return;
+        }
+        try {
+            if (this.isComplexTask(input)) {
+                console.log(chalk_1.default.dim('\n  🤖 Tarea compleja detectada — activando modo multi-agente...\n'));
+                await this.runMultiAgent(input);
+            }
+            else {
+                await this.agent.process(input);
+            }
+        }
+        catch (error) {
+            console.log();
+            console.log(chalk_1.default.red('  ✗ Error: ') + chalk_1.default.white(error instanceof Error ? error.message : String(error)));
+            console.log();
+        }
+        this.showPrompt();
+    };
+    /**
+     * Detect if a user request is complex enough to warrant multi-agent mode.
+     * Triggers on project/app/system creation tasks that benefit from specialized agents.
+     * Simple tasks (fix a bug, add a function, explain code) stay in single-agent mode.
+     */
+    isComplexTask(input) {
+        const lower = input.toLowerCase();
+        // Continuations and short inputs always go to single agent
+        const continuationPhrases = [
+            'continua', 'continue', 'sigue', 'keep going', 'go on', 'avanza',
+            'siguiente', 'next', 'proceed', 'si', 'yes', 'ok', 'dale',
+        ];
+        if (continuationPhrases.some(p => lower === p || lower.startsWith(p + ' ')))
+            return false;
+        if (input.split(' ').length < 4)
+            return false;
+        // Project/app creation — strong signal
+        const projectCreation = [
+            'crea un proyecto', 'crea el proyecto', 'crear un proyecto', 'crear el proyecto',
+            'create a project', 'create the project', 'new project',
+            'crea una app', 'crea una aplicación', 'crea una aplicacion',
+            'create an app', 'create an application', 'new application',
+            'crea un sistema', 'create a system',
+            'crea una plataforma', 'create a platform',
+            'construye un', 'construye una', 'build a ', 'build an ',
+            'desarrolla un', 'desarrolla una', 'develop a ', 'develop an ',
+            'implementa un', 'implementa una', 'implement a ', 'implement an ',
+            'desde cero', 'from scratch',
+            'full stack', 'fullstack',
+        ];
+        if (projectCreation.some(p => lower.includes(p)))
+            return true;
+        // Technology stack mentions combined with "create/build"
+        const actionWords = ['crea', 'create', 'construye', 'build', 'desarrolla', 'develop',
+            'implementa', 'implement', 'genera', 'generate', 'setup', 'configura'];
+        const stackKeywords = [
+            'react', 'next.js', 'nextjs', 'vue', 'angular', 'svelte',
+            'express', 'fastapi', 'django', 'flask', 'nest.js', 'nestjs',
+            'api rest', 'rest api', 'graphql', 'backend', 'frontend',
+            'node.js', 'nodejs', 'typescript app', 'python app',
+            'with authentication', 'con autenticación', 'con autenticacion',
+            'with database', 'con base de datos', 'with mongodb', 'with postgres',
+        ];
+        const hasAction = actionWords.some(a => lower.includes(a));
+        const hasStack = stackKeywords.some(s => lower.includes(s));
+        if (hasAction && hasStack)
+            return true;
+        return false;
+    }
     constructor(config, modelName, workingDir) {
         this.config = config;
         this.modelName = modelName;
@@ -85,51 +178,31 @@ class CodeCLI {
             terminal: true
         });
         this.showPrompt();
-        this.rl.on('line', async (line) => {
-            // Skip this line if we're ignoring it (post-inquirer cleanup)
-            if (this.ignoreNextLine) {
-                this.ignoreNextLine = false;
-                return;
-            }
-            const input = line.trim();
-            if (!input) {
-                this.showPrompt();
-                return;
-            }
-            // Clear the status line
-            this.clearStatusLine();
-            // Handle commands
-            if (input.startsWith('/')) {
-                // Prevent simultaneous command execution
-                if (this.commandInProgress) {
-                    return;
-                }
-                this.commandInProgress = true;
-                try {
-                    await this.handleCommand(input);
-                }
-                finally {
-                    this.commandInProgress = false;
-                }
-                console.log();
-                this.showPrompt();
-                return;
-            }
-            // Process with agent
-            try {
-                await this.agent.process(input);
-            }
-            catch (error) {
-                console.log();
-                console.log(chalk_1.default.red('  ✗ Error: ') + chalk_1.default.white(error instanceof Error ? error.message : String(error)));
-                console.log();
-            }
-            this.showPrompt();
-        });
+        this.rl.on('line', this.lineHandler);
         this.closeHandler = () => {
             // Ignore close events right after inquirer to prevent spurious exits
             if (this.ignoreNextClose) {
                 this.ignoreNextClose = false;
+                return;
+            }
+            // Only exit if the user explicitly requested it (/exit or Ctrl+D on a fresh prompt).
+            // Any other 'close' event (e.g. spurious close after readline recreation post-inquirer)
+            // should recreate readline instead of killing the process.
+            if (!this.isShuttingDown) {
+                // Spurious close — null out rl immediately so the recreation check works
+                this.rl = null;
+                setTimeout(() => {
+                    if (!this.isShuttingDown && !this.rl) {
+                        this.rl = readline.createInterface({
+                            input: process.stdin,
+                            output: process.stdout,
+                            terminal: true
+                        });
+                        this.rl.on('line', this.lineHandler);
+                        this.rl.on('close', this.closeHandler);
+                        this.showPrompt();
+                    }
+                }, 50);
                 return;
             }
             console.log(chalk_1.default.blue('\n👋 Goodbye!'));
@@ -177,48 +250,8 @@ class CodeCLI {
             // Set flags to ignore spurious events after inquirer
             this.ignoreNextClose = true;
             this.ignoreNextLine = true;
-            // Re-attach line handler
-            this.rl.on('line', async (line) => {
-                // Skip this line if we're ignoring it (post-inquirer cleanup)
-                if (this.ignoreNextLine) {
-                    this.ignoreNextLine = false;
-                    return;
-                }
-                const input = line.trim();
-                if (!input) {
-                    this.showPrompt();
-                    return;
-                }
-                // Clear the status line
-                this.clearStatusLine();
-                // Handle commands
-                if (input.startsWith('/')) {
-                    // Prevent simultaneous command execution
-                    if (this.commandInProgress) {
-                        return;
-                    }
-                    this.commandInProgress = true;
-                    try {
-                        await this.handleCommand(input);
-                    }
-                    finally {
-                        this.commandInProgress = false;
-                    }
-                    console.log();
-                    this.showPrompt();
-                    return;
-                }
-                // Process with agent
-                try {
-                    await this.agent.process(input);
-                }
-                catch (error) {
-                    console.log();
-                    console.log(chalk_1.default.red('  ✗ Error: ') + chalk_1.default.white(error instanceof Error ? error.message : String(error)));
-                    console.log();
-                }
-                this.showPrompt();
-            });
+            // Re-attach handlers using the shared arrow properties
+            this.rl.on('line', this.lineHandler);
             // Re-add close handler
             if (this.closeHandler) {
                 this.rl.on('close', this.closeHandler);
@@ -343,12 +376,44 @@ class CodeCLI {
             case 'roadmap':
                 await this.showRoadmap();
                 break;
+            case 'multi':
+            case 'multiagent': {
+                const task = args.join(' ').trim();
+                if (!task) {
+                    console.log(chalk_1.default.red('Usage: /multi <task description>'));
+                    console.log(chalk_1.default.gray('Example: /multi Create a REST API with authentication'));
+                    break;
+                }
+                await this.runMultiAgent(task);
+                break;
+            }
             case 'exit':
             case 'quit':
+                this.isShuttingDown = true;
                 process.exit(0);
             default:
                 console.log(chalk_1.default.red(`Unknown command: ${cmd}`));
                 console.log(chalk_1.default.gray('Use /help to see available commands'));
+        }
+    }
+    async runMultiAgent(task) {
+        // /multi bypasses Agent.process() so language must be detected from the task string itself.
+        // If the agent already has a detected language from prior conversation, that takes precedence.
+        const { detectLanguage } = require('../utils/LangStrings');
+        const taskLang = detectLanguage(task);
+        // Prefer session language if already set by prior conversation; otherwise use task detection
+        const agentLang = this.agent.getSessionLanguage();
+        const lang = agentLang !== 'en' ? agentLang : taskLang;
+        // Close the main readline before running orchestrator to avoid conflicts:
+        // Orchestrator and ConfirmHelper create their own readline instances for user prompts.
+        // Having two readline interfaces on the same stdin causes doubled/garbled input.
+        this.pauseReadlineForInquirer();
+        try {
+            const orchestrator = new Orchestrator_1.Orchestrator(this.config, this.workingDir);
+            await orchestrator.run(task, this.modelName, lang);
+        }
+        finally {
+            await this.resumeReadlineAfterInquirer();
         }
     }
     showHelp() {
@@ -370,6 +435,7 @@ class CodeCLI {
             ['/undo [n]', 'Undo last n operations (rollback changes)'],
             ['/snapshots', 'List all file snapshots'],
             ['/tools', 'List available tools'],
+            ['/multi <task>', 'Run multi-agent mode (orchestrator + specialized agents)'],
             ['/exit', 'Exit']
         ];
         commands.forEach(([cmd, desc]) => {

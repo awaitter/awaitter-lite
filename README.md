@@ -30,34 +30,34 @@ Multi-model AI assistant with **automatic project planning**, **smart execution 
 
 ---
 
-## ⚡ What's New in v1.0.35
+## ⚡ What's New in v1.0.45
 
 <table>
 <tr>
 <td width="50%">
 
-### 🗺️ **Smart Roadmap System**
-Automatically breaks down complex projects into sprints and tasks. **Never loses track**, even on 100+ file projects.
+### 🤖 **Multi-Agent Mode**
+Spawn specialized agents (Architect, Backend, Frontend, QA) that work in parallel on complex tasks. Each agent has its own role, tools, and context.
 
 </td>
 <td width="50%">
 
-### 🎮 **3 Execution Modes**
-Choose your style: Full auto, sprint-by-sprint, or step-by-step control.
+### 🧠 **Charl Language Support**
+Native expert knowledge of the [Charl ML language](https://github.com/charlcoding-stack/charlcode). Auto-detected from `.ch` files — agents know Charl builtins, syntax, and patterns without any setup.
 
 </td>
 </tr>
 <tr>
 <td width="50%">
 
-### 🔄 **Model Hot-Swapping**
-Switch between GPT-4, Claude, Gemini mid-project. **Context preserved 100%**.
+### 🔒 **Safe Execution**
+Dangerous commands (`rm -rf`, `npm audit fix --force`, `fuser -k`, etc.) require explicit confirmation before running.
 
 </td>
 <td width="50%">
 
-### ⚡ **Persistent Progress**
-Close the CLI, reboot your PC. Your roadmap and progress stay intact.
+### 🗂️ **Session Isolation**
+Sessions are now scoped to their working directory — no more cross-project context bleeding between different projects.
 
 </td>
 </tr>

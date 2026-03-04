@@ -9,6 +9,7 @@ export interface ModelConfig {
     frequencyPenalty?: number;
     presencePenalty?: number;
     stopSequences?: string[];
+    contextWindow?: number;
     reasoning?: {
         enabled: boolean;
         budget?: number;

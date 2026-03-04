@@ -11,6 +11,14 @@ export declare class CodeCLI {
     private ignoreNextClose;
     private ignoreNextLine;
     private commandInProgress;
+    private isShuttingDown;
+    private lineHandler;
+    /**
+     * Detect if a user request is complex enough to warrant multi-agent mode.
+     * Triggers on project/app/system creation tasks that benefit from specialized agents.
+     * Simple tasks (fix a bug, add a function, explain code) stay in single-agent mode.
+     */
+    private isComplexTask;
     constructor(config: Config, modelName: string, workingDir: string);
     initialize(): Promise<void>;
     start(): Promise<void>;
@@ -20,6 +28,7 @@ export declare class CodeCLI {
     private resumeReadlineAfterInquirer;
     private printWelcome;
     private handleCommand;
+    private runMultiAgent;
     private showHelp;
     private listModels;
     private getSpeedIcon;

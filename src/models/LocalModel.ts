@@ -15,77 +15,52 @@ export class LocalModel implements Model {
   }
 
   async chat(messages: any[], tools?: any[]): Promise<any> {
-    // Get optimized configuration for this model
     const modelConfig = getModelConfig(this.modelName);
 
-    // Ollama format
+    // Use OpenAI-compatible endpoint for native tool/function calling support
     const payload: any = {
       model: this.ollamaModelName,
       messages,
       stream: false,
-      options: {
-        temperature: modelConfig.temperature,
-        top_p: modelConfig.topP,
-        num_predict: modelConfig.maxTokens,
-      }
+      temperature: modelConfig.temperature,
+      top_p: modelConfig.topP,
+      max_tokens: modelConfig.maxTokens,
     };
 
-    // Add stop sequences if present
-    if (modelConfig.stopSequences && modelConfig.stopSequences.length > 0) {
-      payload.options.stop = modelConfig.stopSequences;
-    }
-
-    // Ollama doesn't support function calling natively yet
-    // If tools are provided, add them to system message as context
+    // Pass tools natively — Ollama supports this since v0.3+
     if (tools && tools.length > 0) {
-      const toolDescriptions = tools.map(tool =>
-        `- ${tool.name}: ${tool.description}`
-      ).join('\n');
-
-      const systemMsg = messages.find(m => m.role === 'system');
-      if (systemMsg) {
-        systemMsg.content += `\n\nAvailable tools:\n${toolDescriptions}`;
-      } else {
-        messages.unshift({
-          role: 'system',
-          content: `Available tools:\n${toolDescriptions}`
-        });
-      }
+      payload.tools = tools.map(tool => ({
+        type: 'function',
+        function: {
+          name: tool.name,
+          description: tool.description,
+          parameters: tool.parameters || tool.input_schema || {}
+        }
+      }));
     }
 
     try {
       const response = await axios.post(
-        `${this.url}/api/chat`,
+        `${this.url}/v1/chat/completions`,
         payload,
         {
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          timeout: 300000 // 5 minutes for slow CPU
+          headers: { 'Content-Type': 'application/json' },
+          timeout: 300000
         }
       );
 
-      // Convert Ollama response to OpenAI format
-      return {
-        choices: [{
-          message: {
-            role: response.data.message.role,
-            content: response.data.message.content,
-            tool_calls: undefined // Ollama doesn't support function calling yet
-          }
-        }],
-        usage: {
-          prompt_tokens: response.data.prompt_eval_count || 0,
-          completion_tokens: response.data.eval_count || 0,
-          total_tokens: (response.data.prompt_eval_count || 0) + (response.data.eval_count || 0)
-        }
-      };
+      // Already in OpenAI format — return directly
+      return response.data;
+
     } catch (error: any) {
       if (error.code === 'ECONNREFUSED') {
         throw new Error('Cannot connect to Ollama. Make sure Ollama is running.');
       }
       if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
-        throw new Error(`Timeout: Model took more than 5 minutes to respond. On CPU, local models are very slow. Consider using: code-cli --model gpt4`);
+        throw new Error('Timeout: Model took too long. Try a smaller model.');
+      }
+      if (error.response?.status === 400) {
+        throw new Error('Ollama error 400: Context too long or invalid request. Try /clear to reset the conversation.');
       }
       throw new Error(`Ollama error: ${error.message}`);
     }

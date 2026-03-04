@@ -82,16 +82,25 @@ export class SessionManager {
   /**
    * Get the most recent session
    */
-  async getLastSession(): Promise<SessionData | null> {
+  async getLastSession(workingDir?: string): Promise<SessionData | null> {
     const sessions = await this.listSessions();
 
     if (sessions.length === 0) {
       return null;
     }
 
+    // If workingDir is provided, only restore sessions from the same directory.
+    // This prevents loading a React session when starting in a Charl project, etc.
+    const candidates = workingDir
+      ? sessions.filter(s => s.workingDir === workingDir)
+      : sessions;
+
+    if (candidates.length === 0) {
+      return null;
+    }
+
     // Sessions are already sorted by lastActivity (newest first)
-    const lastSessionId = sessions[0].id;
-    return this.loadSession(lastSessionId);
+    return this.loadSession(candidates[0].id);
   }
 
   /**

@@ -25,7 +25,7 @@ export declare class SessionManager {
     /**
      * Get the most recent session
      */
-    getLastSession(): Promise<SessionData | null>;
+    getLastSession(workingDir?: string): Promise<SessionData | null>;
     /**
      * List all sessions (sorted by most recent first)
      */

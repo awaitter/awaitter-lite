@@ -225,6 +225,7 @@ export class Config {
         grep: true,
         git_status: true,
         git_diff: true,
+        git_add: true,
         git_commit: true,
         git_branch: true,
         git_log: true,

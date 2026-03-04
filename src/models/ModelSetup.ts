@@ -17,13 +17,13 @@ export interface ModelSetupResult {
  * Map of internal model names to Ollama names
  */
 const MODEL_NAME_MAP: Record<string, string> = {
-  'local': 'qwen2.5-coder:1.5b',  // Faster on CPU
-  'qwen-1.5b': 'qwen2.5-coder:1.5b',
+  'local': 'qwen2.5-coder:7b',    // Minimum usable model (7B)
+  'qwen-1.5b': 'qwen2.5-coder:1.5b', // Still available if explicitly requested
   'qwen-7b': 'qwen2.5-coder:7b',
   'qwen-14b': 'qwen2.5-coder:14b',
   'qwen-32b': 'qwen2.5-coder:32b',
-  'qwen': 'qwen2.5-coder:1.5b',
-  'qwen-coder': 'qwen2.5-coder:1.5b',
+  'qwen': 'qwen2.5-coder:7b',
+  'qwen-coder': 'qwen2.5-coder:7b',
   'deepseek': 'deepseek-coder-v2:16b',
   'deepseek-coder': 'deepseek-coder-v2:16b',
   'codestral': 'codestral:22b',
@@ -159,7 +159,12 @@ export class ModelSetup {
       const { stdout } = await execAsync('ollama list', {
         timeout: 10000 // 10 seconds timeout
       });
-      return stdout.includes(modelName.split(':')[0]);
+      // Match the full model name (including tag) to avoid false positives.
+      // e.g. "qwen2.5-coder:7b" must NOT match when only "qwen2.5-coder:1.5b" is queried.
+      return stdout.split('\n').some(line => {
+        const name = line.split(/\s+/)[0];
+        return name === modelName;
+      });
     } catch (error: any) {
       console.log(chalk.yellow(`⚠️  Error checking model: ${error.message}`));
       return false;
@@ -192,7 +197,8 @@ export class ModelSetup {
   private static async downloadModel(modelName: string): Promise<boolean> {
     const spinner = ora({
       text: chalk.dim(`Downloading ${modelName}... This may take several minutes`),
-      color: 'yellow'
+      color: 'yellow',
+      discardStdin: false
     }).start();
 
     try {

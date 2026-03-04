@@ -8,6 +8,7 @@ import { MarkdownRenderer } from '../utils/MarkdownRenderer';
 import { UIHelper } from '../utils/UIHelper';
 import { KeyboardHandler } from '../utils/KeyboardHandler';
 import { getSystemPrompt } from '../prompts/system-prompt';
+import { isCharlProject, getCharlKnowledgePack, getCharlBinPath } from '../knowledge/CharlKnowledge';
 import { getSystemPromptV2 } from '../prompts/system-prompt-v2';
 import { getSystemPromptV3 } from '../prompts/system-prompt-v3';
 import { getSystemPromptV4 } from '../prompts/system-prompt-v4';
@@ -19,6 +20,10 @@ import { ErrorRecovery } from '../utils/ErrorRecovery';
 import { RoadmapPlanner } from '../planning/RoadmapPlanner';
 import { Roadmap, ExecutionMode } from '../planning/types';
 import { RoadmapParser } from '../planning/RoadmapParser';
+import { parseToolCallsFromContent } from '../utils/ToolCallParser';
+import { detectLanguage, Lang, PROMPTS } from '../utils/LangStrings';
+import { askConfirmation } from '../utils/ConfirmHelper';
+import { BashTool } from '../tools/BashTool';
 
 interface Message {
   role: string;
@@ -41,6 +46,9 @@ export class Agent {
   private originalUserRequest?: string; // Remember the original request
   private currentRoadmap?: Roadmap; // Current roadmap for V5 mode
   private isWaitingForContinuation: boolean = false; // Flag for sprint/step modes
+  private sessionExecutionMode?: string; // Overrides config executionMode for this session
+  private sessionLanguage: Lang = 'en'; // Detected from user input, persists for the session
+  private consecutiveAnnouncementsWithoutTools: number = 0; // Loop detection for announce-only responses
 
   constructor(config: Config, modelManager: ModelManager, workingDir: string, sessionManager?: SessionManager, snapshotManager?: SnapshotManager) {
     this.config = config;
@@ -50,6 +58,11 @@ export class Agent {
     this.snapshotManager = snapshotManager || new SnapshotManager(50);
     // Initialize ToolManager AFTER SnapshotManager so it can be passed to tools
     this.toolManager = new ToolManager(config, workingDir, this.snapshotManager);
+  }
+
+  /** Expose detected session language to callers (e.g. CodeCLI → Orchestrator) */
+  getSessionLanguage(): Lang {
+    return this.sessionLanguage;
   }
 
   /**
@@ -96,12 +109,13 @@ export class Agent {
       // COMPACT VERSION - Minimal context for small models
       contextualPrompt = `${basePrompt}
 
-# SESSION
-Working Dir: ${this.workingDir}
-Model: ${this.modelManager.getCurrentModelName()}
-Mode: ${executionMode}
+# YOUR ENVIRONMENT
+You are running IN: ${this.workingDir}
+You have REAL filesystem access to ALL files in this directory.
+Model: ${this.modelManager.getCurrentModelName()} | Mode: ${executionMode}
 
-Tools: ${toolsList}
+Available tools (USE THEM — they work):
+${toolsList}
 
 Max iterations: ${this.config.get('agent').maxIterations}`;
     } else {
@@ -170,6 +184,25 @@ Agent loop: ${this.config.get('agent').maxIterations} iterations max.
 Use them ALL if needed to complete tasks.`;
     }
 
+    // Charl language injection — PREPEND before base prompt when .ch/.charl files detected.
+    // Placed at the TOP so the model sees it first, overriding Python/JS defaults.
+    if (isCharlProject(this.workingDir)) {
+      const charlPack = getCharlKnowledgePack(useCompactPrompt);
+      const charlBin = getCharlBinPath();
+      const runCmd = charlBin ? `${charlBin} run` : 'charl run';
+      const charlHeader = `[CHARL PROJECT — MANDATORY RULES]
+1. ALL Charl files MUST use .ch extension (e.g. network.ch, train.ch). NOT .py, NOT .charl.
+2. NO import statements. NO charl.X syntax. Builtins are global: nn_linear(), optim_sgd_step(), etc.
+3. Create .ch files with write tool, then run: bash(command="${runCmd} <file.ch>")
+4. NEVER use numpy, torch, keras or any external library — Charl has everything built in.
+
+${charlPack}
+
+---
+`;
+      contextualPrompt = charlHeader + contextualPrompt;
+    }
+
     // Add system message
     this.messages.unshift({
       role: 'system',
@@ -214,94 +247,234 @@ Use them ALL if needed to complete tasks.`;
 
     const contentLower = content.toLowerCase();
 
-    // 🚫 CRITICAL: Detect response loops - if same message repeated, STOP
+    // Effective execution mode: session override takes priority over config
+    const executionMode = this.sessionExecutionMode || this.config.get('agent').executionMode || 'sprint';
+
+    // 🚫 Never auto-continue in step-by-step mode — always wait for user
+    if (executionMode === 'step-by-step') {
+      return false;
+    }
+
+    // 🚫 If model is asking for confirmation, stop and wait for user
+    const confirmationPhrases = [
+      'please confirm', 'do you want to proceed', 'shall i proceed',
+      'waiting for user', 'waiting for confirmation', 'your confirmation',
+      'continue?', 'shall i continue', 'would you like me to continue',
+      'confirmar', 'deseas continuar', '¿continuar?', 'continuar?',
+    ];
+    if (confirmationPhrases.some(p => contentLower.includes(p))) {
+      return false;
+    }
+
+    // 🚫 Detect response loops — exact match OR high similarity, AND cap on pure announcements
     if (this.messages.length >= 2) {
       const lastAssistantMessages = this.messages
         .filter(m => m.role === 'assistant' && m.content)
-        .slice(-3); // Last 3 assistant messages
+        .slice(-4);
 
       if (lastAssistantMessages.length >= 2) {
-        const currentContent = content.trim().substring(0, 200); // First 200 chars
+        const currentContent = content.trim().substring(0, 200);
         const previousContent = lastAssistantMessages[lastAssistantMessages.length - 2].content?.trim().substring(0, 200);
 
-        // If responding with same content as previous message, it's a loop
+        // Exact match
         if (currentContent === previousContent) {
-          console.log(chalk.yellow('  ⚠️  Response loop detected - stopping auto-continue'));
+          console.log(chalk.yellow('  ⚠️  Response loop detected (exact) - stopping'));
+          return false;
+        }
+
+        // High similarity: same first 80 chars (model generating slight variations of same response)
+        if (currentContent.substring(0, 80) === previousContent?.substring(0, 80)) {
+          console.log(chalk.yellow('  ⚠️  Response loop detected (similar) - stopping'));
           return false;
         }
       }
     }
 
-    // 🎯 CRITICAL: If roadmap is 100% complete, DON'T auto-continue
-    // Allow natural conversation about the completed project
+    // 🚫 Cap consecutive announce-only responses to avoid infinite loops
+    if (!hadToolCalls && this.consecutiveAnnouncementsWithoutTools >= 3) {
+      console.log(chalk.yellow('  ⚠️  Model keeps announcing without acting - stopping to avoid loop'));
+      this.consecutiveAnnouncementsWithoutTools = 0;
+      return false;
+    }
+
+    // 🎯 If roadmap is 100% complete, DON'T auto-continue
     if (this.currentRoadmap) {
       const { RoadmapPlanner } = require('../planning/RoadmapPlanner');
       const progress = RoadmapPlanner.calculateProgress(this.currentRoadmap);
 
       if (progress.percentComplete === 100) {
-        // Roadmap is 100% done - allow conversation, don't force execution
-        // UNLESS user explicitly says "continua" or asks for more work
-        const isExplicitContinuation = contentLower.includes('continua') ||
-                                       contentLower.includes('continue') ||
-                                       contentLower.includes('sigue') ||
-                                       contentLower.includes('next');
-
-        if (!isExplicitContinuation) {
-          return false; // Don't auto-continue on completed roadmap
-        }
+        return false;
       }
     }
 
     // Check for pending TODOs
     const todoStatus = this.detectAndTrackTodos(content);
     if (todoStatus.hasTodos && todoStatus.pendingCount > 0) {
-      return true; // Has pending TODOs, must continue
+      return true;
     }
 
-    // Check if response indicates it will continue but didn't use tools
+    // Common "I will do X" announcement phrases in Spanish AND English
     const incompletePhrases = [
+      // Spanish — announce without executing
       'voy a', 'vamos a', 'ahora voy', 'ahora vamos',
-      'i will', "i'll", 'let me', "let's",
-      'continuaré', 'continuare', 'seguiré', 'seguire',
-      'next i', 'now i', 'going to', 'continuando',
-      'proceeding', 'starting', 'beginning', 'iniciando',
-      'shall we proceed', 'would you like me to',
-      'vou fazer', 'vou tentar', // Portuguese
+      'continuaré', 'seguiré', 'continuando', 'iniciando',
+      'procederé', 'procederemos', 'realizaré', 'realizaremos',
+      'implementaré', 'implementaremos', 'analizaré', 'analizaremos',
+      'leeré', 'leeremos', 'crearé', 'crearemos',
+      'ejecutaré', 'ejecutaremos', 'instalaré', 'instalaremos',
+      'configuraré', 'configuraremos', 'mostraré', 'mostraremos',
+      'revisaré', 'revisaremos', 'empezaré', 'comenzaré',
+      'a continuación', 'luego haré', 'ahora leeré',
+      'entendido. continuaré', 'entendido continuaré',
+      'paso 1', 'paso 2', 'paso 3',
+      // English — announce without executing
+      "i'll", "i will", 'next i', 'now i', "let's", "let me",
+      "i'm going to", 'first i', 'then i', 'finally i',
+      "i'll start", "i'll create", "i'll read", "i'll check",
     ];
 
-    const soundsIncomplete = incompletePhrases.some(phrase => contentLower.includes(phrase));
-    if (soundsIncomplete && !hadToolCalls) {
-      return true; // Said it will do something but didn't
+    // Check if response indicates it will do something but didn't use tools.
+    // Trigger for ALL modes (sprint, unstoppable) — not just when roadmap is active.
+    if (!hadToolCalls) {
+      if (incompletePhrases.some(phrase => contentLower.includes(phrase))) {
+        return true;
+      }
+
+      // Also continue if we have an active roadmap task (regardless of mode)
+      if (this.currentRoadmap) {
+        const { RoadmapPlanner } = require('../planning/RoadmapPlanner');
+        const currentTask = RoadmapPlanner.getCurrentTask(this.currentRoadmap);
+        const progress = RoadmapPlanner.calculateProgress(this.currentRoadmap);
+        if (currentTask && progress.percentComplete < 100) {
+          return true;
+        }
+      }
     }
 
-    // Check if showing roadmap progress indicators without tool calls
-    const hasRoadmapProgress = content.includes('⏳ [SPRINT') || content.includes('☐ [SPRINT') ||
-                               content.includes('EXECUTING:') || content.includes('SPRINT') && content.includes('[');
-    if (hasRoadmapProgress && !hadToolCalls) {
-      return true; // Showing roadmap status but not executing
+    // Check if showing roadmap SPRINT execution markers without tool calls
+    const hasRoadmapExecution = content.includes('⏳ [SPRINT') || content.includes('EXECUTING:');
+    if (hasRoadmapExecution && !hadToolCalls) {
+      return true;
     }
 
-    // Check if showing code in markdown instead of writing it
-    const hasCodeBlock = content.includes('```') || content.includes('┌─') || content.includes('│');
-    const mentionsWriting = contentLower.includes('agregar') || contentLower.includes('código') ||
-                           contentLower.includes('add') || contentLower.includes('code') ||
-                           contentLower.includes('implement') || contentLower.includes('create');
+    return false;
+  }
 
-    if (hasCodeBlock && mentionsWriting && !hadToolCalls) {
-      return true; // Showed code instead of writing it
+  /**
+   * Detect if user is asking about the current project/codebase
+   */
+  private isProjectQuery(input: string): boolean {
+    const lower = input.toLowerCase();
+    return [
+      'el proyecto', 'the project', 'este proyecto', 'this project',
+      'el código', 'the code', 'este código', 'this code',
+      'la app', 'the app', 'esta app', 'this app',
+      'ves el', 'puedes ver', 'puedes revisar', 'puedes revisarlo',
+      'can you see', 'can you review', 'can you check',
+      'analiza', 'analyze', 'review the', 'revisar el',
+      'cómo está el', 'how does it look', 'how is the',
+      'está listo', 'is it ready', 'puede levantarse',
+      'qué archivos', 'qué tiene', 'what files', 'muéstrame', 'show me the',
+      'mira el', 'look at the', 'check the project',
+      'estructura', 'structure', 'arquitectura', 'architecture',
+      'dependencias', 'dependencies',
+    ].some(t => lower.includes(t));
+  }
+
+  /**
+   * Detect if model responded with a refusal to access files
+   */
+  private isRefusalResponse(content: string): boolean {
+    const lower = content.toLowerCase();
+    return [
+      'no tengo acceso directo',
+      'no puedo ver',
+      'no puedo acceder',
+      'no puedo revisar',
+      'no tengo la capacidad de revisar',
+      'no tengo visibilidad',
+      "i don't have access",
+      'i cannot access',
+      "i can't access",
+      "don't have direct access",
+      'cannot directly access',
+      'no tengo acceso a',
+      'sin acceso',
+      'no puedo leer',
+      'no puedo abrir',
+    ].some(phrase => lower.includes(phrase));
+  }
+
+  /**
+   * Get a snapshot of the current project for context injection.
+   * Runs glob + reads key config files automatically.
+   */
+  private async getProjectContext(): Promise<string> {
+    try {
+      const filesRaw = await this.toolManager.executeTool('glob', { pattern: '**/*', path: this.workingDir });
+      const files = filesRaw
+        .split('\n')
+        .map((f: string) => f.trim())
+        .filter((f: string) => f && !f.startsWith('Error'));
+
+      if (files.length === 0) {
+        return `Working directory "${this.workingDir}" is empty — no files found.`;
+      }
+
+      let context = `PROJECT LOCATION: ${this.workingDir}\nFILES (${files.length}):\n${files.slice(0, 50).join('\n')}`;
+      if (files.length > 50) context += `\n... and ${files.length - 50} more`;
+
+      // Read the first key config file found
+      const keyFiles = ['package.json', 'pyproject.toml', 'Cargo.toml', 'go.mod', 'composer.json', 'README.md'];
+      for (const kf of keyFiles) {
+        if (files.some((f: string) => f.endsWith(kf))) {
+          try {
+            const fileContent = await this.toolManager.executeTool('read', {
+              file_path: path.join(this.workingDir, kf)
+            });
+            if (fileContent && !fileContent.startsWith('Error')) {
+              context += `\n\n${kf}:\n${fileContent.slice(0, 800)}${fileContent.length > 800 ? '\n...(truncated)' : ''}`;
+              break;
+            }
+          } catch { /* ignore */ }
+        }
+      }
+
+      return context;
+    } catch {
+      return '';
     }
-
-    return false; // Looks complete
   }
 
   async process(userInput: string) {
     const inputLower = userInput.toLowerCase().trim();
+
+    // Update session language from every non-command user message
+    if (!userInput.startsWith('/') && userInput.trim().length > 3) {
+      this.sessionLanguage = detectLanguage(userInput);
+    }
 
     // Detect if this is a continuation request
     const isContinuation = [
       'continua', 'continue', 'sigue', 'keep going', 'go on',
       'se detuvo', 'it stopped', 'avanza', 'proceed'
     ].some(phrase => inputLower.includes(phrase));
+
+    // Detect "no pares" / persistence phrases → activate unstoppable mode for this session
+    const noParesPhrases = [
+      'no pares', 'no te pares', 'no te detengas', 'sin parar', 'hazlo sin parar',
+      'continúa hasta terminar', 'hasta que termines', 'hasta lograrlo',
+      'hasta terminarlo', 'no te detengas hasta', 'sigue sin parar',
+      'ejecuta todo', 'hazlo todo', 'complétalo todo', 'termínalo todo',
+      'modo unstoppable', 'unstoppable', 'no stops', 'keep going',
+      'no pares hasta', 'sin detenerte', 'sin detenerse',
+    ];
+    if (noParesPhrases.some(phrase => inputLower.includes(phrase))) {
+      if (this.sessionExecutionMode !== 'unstoppable') {
+        this.sessionExecutionMode = 'unstoppable';
+        console.log(chalk.yellow('\n  ⚡ Unstoppable mode activated — executing without stops\n'));
+      }
+    }
 
     // Store original request for context (only if not a continuation)
     if (!isContinuation) {
@@ -317,6 +490,15 @@ Use them ALL if needed to complete tasks.`;
     let effectiveInput = userInput;
     if (isContinuation && this.originalUserRequest) {
       effectiveInput = `Continue with the original task: "${this.originalUserRequest}". ${userInput}`;
+    }
+
+    // Auto-inject project context for project-related queries.
+    // This bypasses the model needing to "decide" to use tools — we fetch the info upfront.
+    if (this.isProjectQuery(effectiveInput)) {
+      const ctx = await this.getProjectContext();
+      if (ctx) {
+        effectiveInput = `${effectiveInput}\n\n[Auto-gathered project context:]\n${ctx}`;
+      }
     }
 
     // Add user message
@@ -335,6 +517,10 @@ Use them ALL if needed to complete tasks.`;
       console.log(chalk.yellow('\n  ⚠️  Operation cancelled by user (ESC pressed)\n'));
     });
 
+    // Track repeated tool calls to detect infinite loops
+    let lastToolSignature: string | null = null;
+    let repeatedToolCount = 0;
+
     // Agent loop
     for (let i = 0; i < maxIterations; i++) {
       // Check if user pressed ESC
@@ -345,6 +531,9 @@ Use them ALL if needed to complete tasks.`;
 
       try {
         const tools = this.toolManager.getToolSchemas();
+
+        // Prune messages if context window is approaching limit
+        this.pruneMessagesIfNeeded();
 
         // Determine action type and show appropriate message
         const actionMessage = this.getActionMessage(userInput);
@@ -358,7 +547,42 @@ Use them ALL if needed to complete tasks.`;
         // Stop spinner
         UIHelper.stopSpinner();
 
-        // Print assistant response
+        // Strip special tokens that local models (qwen, deepseek, codestral) sometimes
+        // leak into their response content: <|im_start|>, <|im_end|>, <tool_response>, etc.
+        if (message.content) {
+          message.content = message.content
+            .replace(/<\|im_start\|>\w*\n?/g, '')
+            .replace(/<\|im_end\|>/g, '')
+            .replace(/<\|endoftext\|>/g, '')
+            .replace(/<tool_response>/g, '')
+            .replace(/<\/tool_response>/g, '')
+            .trim();
+          if (!message.content) message.content = undefined as any;
+        }
+
+        // Filter: qwen/deepseek sometimes echo back a tool result as JSON {name, content}
+        // instead of responding with natural language. Suppress this to avoid raw JSON output.
+        if (message.content && message.content.trim().startsWith('{')) {
+          try {
+            const parsed = JSON.parse(message.content.trim());
+            if (parsed && typeof parsed.name === 'string' && typeof parsed.content === 'string') {
+              message.content = undefined as any; // Suppress tool-result echo
+            }
+          } catch { /* not valid JSON, keep as-is */ }
+        }
+
+        // Fallback: parse tool calls from content if model didn't use native tool_calls.
+        // Local models (qwen, deepseek, etc.) sometimes emit tool calls as JSON in content
+        // instead of the proper OpenAI tool_calls API format.
+        if ((!message.tool_calls || message.tool_calls.length === 0) && message.content) {
+          const { calls, cleanedContent } = parseToolCallsFromContent(message.content);
+          if (calls.length > 0) {
+            message.tool_calls = calls;
+            message.content = cleanedContent; // Strip JSON from displayed output
+          }
+        }
+
+        // Print assistant response (after stripping any embedded tool call JSON)
         if (message.content) {
           UIHelper.showAssistantHeader();
 
@@ -418,16 +642,33 @@ Use them ALL if needed to complete tasks.`;
         // Auto-save session if needed
         await this.autoSaveSession();
 
+        // Refusal override: if the model claims it can't access files, auto-fetch context
+        // and inject it so the model can answer properly on the next iteration.
+        if (message.content && this.isRefusalResponse(message.content) &&
+            (!message.tool_calls || message.tool_calls.length === 0)) {
+          const ctx = await this.getProjectContext();
+          const lang = this.sessionLanguage;
+          const correction = ctx
+            ? PROMPTS.refusalCorrectionWithContext[lang](ctx)
+            : PROMPTS.refusalCorrectionNoContext[lang](this.workingDir);
+          this.messages.push({ role: 'user', content: correction });
+          continue;
+        }
+
         // Check for tool calls
         if (!message.tool_calls || message.tool_calls.length === 0) {
           const content = message.content || '';
 
           // Use new comprehensive auto-continue logic
           if (this.shouldAutoContinue(content, false, i, maxIterations)) {
+            this.consecutiveAnnouncementsWithoutTools++;
+
             // Detect TODO status for better continuation message
             const todoStatus = this.detectAndTrackTodos(content);
 
             let continuationPrompt = '';
+            const effectiveMode = this.sessionExecutionMode || this.config.get('agent').executionMode || 'sprint';
+            const lang = this.sessionLanguage;
 
             // If there's an active roadmap, be specific based on completion status
             if (this.currentRoadmap) {
@@ -435,30 +676,16 @@ Use them ALL if needed to complete tasks.`;
               const currentTask = RoadmapPlanner.getCurrentTask(this.currentRoadmap);
               const progress = RoadmapPlanner.calculateProgress(this.currentRoadmap);
 
-              // Only be aggressive if roadmap is NOT complete
               if (currentTask && progress.percentComplete < 100) {
-                continuationPrompt = `STOP TALKING. EXECUTE NOW.
-
-You are announcing but NOT executing. USE TOOL CALLS to do the actual work.
-
-Current task: [${currentTask.id}] ${currentTask.description}
-
-IMMEDIATE ACTION REQUIRED:
-1. If this is a setup task (npm create, git init, etc.) - USE bash tool NOW
-2. If this is a coding task - USE write/edit tools NOW
-3. If you need to read files first - USE read/glob tools NOW
-
-DO NOT respond with text. ONLY tool calls. Execute the current task RIGHT NOW.`;
+                continuationPrompt = PROMPTS.stopTalkingExecuteRoadmap[lang](currentTask.id, currentTask.description);
               } else {
-                // Roadmap complete or no current task - allow normal conversation
-                continuationPrompt = 'Continue with tool calls if needed, or provide a conversational response.';
+                continuationPrompt = PROMPTS.conversationalContinue[lang];
               }
             } else if (todoStatus.hasTodos && todoStatus.pendingCount > 0) {
-              // Has pending TODOs
-              continuationPrompt = `You have ${todoStatus.pendingCount} pending TODO steps. Continue IMMEDIATELY with the next step. Execute tool calls NOW without announcing. Remember the original request: "${this.originalUserRequest}"`;
+              continuationPrompt = PROMPTS.pendingTodos[lang](todoStatus.pendingCount, this.originalUserRequest || '');
             } else {
-              // Other incomplete indicators
-              continuationPrompt = 'Continue immediately with the tool calls you mentioned. Execute them NOW without announcing. DO NOT show code in markdown blocks - use write/edit tools to create actual files.';
+              // Always use executeImmediately when model announces without acting
+              continuationPrompt = PROMPTS.executeImmediately[lang](this.originalUserRequest || '');
             }
 
             this.messages.push({
@@ -471,6 +698,30 @@ DO NOT respond with text. ONLY tool calls. Execute the current task RIGHT NOW.`;
           // No auto-continue needed, task appears complete
           break;
         }
+
+        // Detect repeated tool calls — if model calls same tool+args twice in a row, inject a nudge
+        const toolSig = message.tool_calls
+          .map((tc: any) => `${tc.function.name}:${tc.function.arguments}`)
+          .join('|');
+
+        if (toolSig === lastToolSignature) {
+          repeatedToolCount++;
+          if (repeatedToolCount >= 2) {
+            this.messages.push({
+              role: 'user',
+              content: PROMPTS.repeatedToolCall[this.sessionLanguage]
+            });
+            repeatedToolCount = 0;
+            lastToolSignature = null;
+            continue;
+          }
+        } else {
+          lastToolSignature = toolSig;
+          repeatedToolCount = 0;
+        }
+
+        // Reset announcement counter — model is actually using tools
+        this.consecutiveAnnouncementsWithoutTools = 0;
 
         // Execute tools
         await this.executeToolCalls(message.tool_calls);
@@ -559,20 +810,79 @@ DO NOT respond with text. ONLY tool calls. Execute the current task RIGHT NOW.`;
     return 'Thinking...';
   }
 
+  /**
+   * Prune messages to stay within the model's context window.
+   * Strategy: keep system prompt + first user message (original request) + last N messages.
+   * Tool result messages are especially large and get trimmed first.
+   */
+  private pruneMessagesIfNeeded() {
+    const { getModelConfig } = require('../config/model-configs');
+    const modelName = this.modelManager.getCurrentModelName();
+    const config = getModelConfig(modelName);
+    const contextWindow: number = config.contextWindow || 8192;
+
+    // Rough token estimate: 1 token ≈ 4 chars
+    const charBudget = contextWindow * 4 * 0.75; // Stay under 75% of window
+
+    const totalChars = this.messages.reduce((sum, m) => sum + (m.content?.length || 0), 0);
+
+    if (totalChars <= charBudget) return;
+
+    // Identify what to keep
+    const systemMsg = this.messages[0]?.role === 'system' ? this.messages[0] : null;
+    const nonSystemMessages = systemMsg ? this.messages.slice(1) : this.messages;
+
+    // Always keep the last 6 messages (3 pairs of user/assistant) to preserve recent context
+    const keepTail = 6;
+    const tail = nonSystemMessages.slice(-keepTail);
+    const head = nonSystemMessages.slice(0, 1); // First user message = original request
+
+    // Rebuild: system + first user message + tail
+    const pruned = [
+      ...(systemMsg ? [systemMsg] : []),
+      ...head,
+      { role: 'system', content: '[Earlier conversation truncated to fit context window]' },
+      ...tail,
+    ];
+
+    const prunedChars = pruned.reduce((sum, m) => sum + (m.content?.length || 0), 0);
+    console.log(chalk.dim(`  ✂  Context pruned: ${Math.round(totalChars / 1000)}k → ${Math.round(prunedChars / 1000)}k chars`));
+
+    this.messages = pruned;
+  }
+
   private async executeToolCalls(toolCalls: any[]) {
     for (const toolCall of toolCalls) {
       const toolName = toolCall.function.name;
-      const args = JSON.parse(toolCall.function.arguments);
+      let args: any;
+      try {
+        args = typeof toolCall.function.arguments === 'string'
+          ? JSON.parse(toolCall.function.arguments)
+          : toolCall.function.arguments;
+      } catch {
+        args = {};
+      }
 
       // Show tool call
       if (this.config.get('ui').showToolCalls) {
         UIHelper.showToolExecution(toolName, args);
       }
 
-      // Check if confirmation needed
-      const tool = this.toolManager.getTool(toolName);
-      if (tool && tool.needsConfirmation(this.config)) {
-        // TODO: Implement confirmation prompt
+      // Check if confirmation needed for destructive bash commands
+      if (toolName === 'bash' && args.command) {
+        const danger = BashTool.getDangerInfo(args.command);
+        if (danger) {
+          UIHelper.stopSpinner();
+          const approved = await askConfirmation(args.command, danger);
+          if (!approved) {
+            // User rejected — tell model so it can propose an alternative
+            const rejected = this.sessionLanguage === 'es'
+              ? `El usuario rechazó el comando: "${args.command}". Propón una alternativa más segura o pregunta al usuario cómo proceder.`
+              : `User rejected the command: "${args.command}". Propose a safer alternative or ask the user how to proceed.`;
+            this.messages.push({ role: 'tool', tool_call_id: toolCall.id, content: rejected });
+            continue;
+          }
+        }
       }
 
       // Get contextual message for tool
@@ -690,8 +1000,13 @@ DO NOT respond with text. ONLY tool calls. Execute the current task RIGHT NOW.`;
               continue;
             }
 
-            // Check if file is mentioned in task description
-            if (taskDesc.includes(fileLower) || taskDesc.includes(fileLower.replace(/\.\w+$/, ''))) {
+            // Check if file is mentioned in task description.
+            // NOTE: fileLower.replace(/\.\w+$/, '') strips extension. For dotfiles like
+            // ".env" or ".browserslistrc" this produces "" — and taskDesc.includes("") is
+            // ALWAYS true, which would incorrectly mark every task as complete. Guard with
+            // a minimum length of 3 characters to avoid this.
+            const fileBasename = fileLower.replace(/\.\w+$/, '');
+            if (taskDesc.includes(fileLower) || (fileBasename.length >= 3 && taskDesc.includes(fileBasename))) {
               const filePath = path.join(this.workingDir, file);
               const stats = fs.statSync(filePath);
 
@@ -979,17 +1294,26 @@ DO NOT respond with text. ONLY tool calls. Execute the current task RIGHT NOW.`;
    * Load the last session automatically
    */
   async loadLastSession(): Promise<boolean> {
-    const session = await this.sessionManager.getLastSession();
+    const session = await this.sessionManager.getLastSession(this.workingDir);
 
     if (!session) {
       return false;
     }
 
-    this.messages = session.messages;
+    // Remove old system message — it will be regenerated fresh on next process()
+    // This ensures the system prompt reflects the current working directory,
+    // model, and any new knowledge (e.g. Charl language pack) that wasn't
+    // present when the session was saved.
+    const withoutSystem = session.messages.filter((m: any) => m.role !== 'system');
+    this.messages = withoutSystem;
     this.currentSessionId = session.id;
-    this.currentRoadmap = session.roadmap;  // 📋 Restore roadmap to continue sprints
-    this.originalUserRequest = session.originalUserRequest;  // Restore original request
-    this.systemPromptInitialized = true; // Session already has system prompt
+    // Do NOT restore currentRoadmap on auto-load — prevents the model from
+    // automatically re-executing old roadmap tasks (e.g. git clone) when the
+    // user simply says "hola". The roadmap is still visible in message history
+    // for context; the user can explicitly ask to resume it.
+    this.currentRoadmap = undefined;
+    this.originalUserRequest = session.originalUserRequest;
+    this.systemPromptInitialized = false; // Force fresh re-initialization with current context
     return true;
   }
 

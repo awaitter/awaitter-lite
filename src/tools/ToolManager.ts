@@ -7,6 +7,7 @@ import { GlobTool } from './GlobTool';
 import { GrepTool } from './GrepTool';
 import { GitStatusTool } from './GitStatusTool';
 import { GitDiffTool } from './GitDiffTool';
+import { GitAddTool } from './GitAddTool';
 import { GitCommitTool } from './GitCommitTool';
 import { GitBranchTool } from './GitBranchTool';
 import { GitLogTool } from './GitLogTool';
@@ -49,6 +50,7 @@ export class ToolManager {
       GrepTool,
       GitStatusTool,
       GitDiffTool,
+      GitAddTool,
       GitCommitTool,
       GitBranchTool,
       GitLogTool
@@ -57,7 +59,8 @@ export class ToolManager {
     for (const ToolClass of standardToolClasses) {
       const tool = new ToolClass(this.workingDir, this.config);
 
-      if (toolConfig[tool.name]) {
+      // Enable tool if explicitly true, OR if not present in saved config (new tool default = enabled)
+      if (toolConfig[tool.name] !== false) {
         this.tools.set(tool.name, tool);
       }
     }

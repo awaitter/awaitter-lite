@@ -3,6 +3,7 @@ import { ModelManager } from '../models/ModelManager';
 import { SessionManager } from '../session/SessionManager';
 import { SnapshotManager } from '../snapshot/SnapshotManager';
 import { Roadmap, ExecutionMode } from '../planning/types';
+import { Lang } from '../utils/LangStrings';
 export declare class Agent {
     private config;
     private modelManager;
@@ -17,7 +18,12 @@ export declare class Agent {
     private originalUserRequest?;
     private currentRoadmap?;
     private isWaitingForContinuation;
+    private sessionExecutionMode?;
+    private sessionLanguage;
+    private consecutiveAnnouncementsWithoutTools;
     constructor(config: Config, modelManager: ModelManager, workingDir: string, sessionManager?: SessionManager, snapshotManager?: SnapshotManager);
+    /** Expose detected session language to callers (e.g. CodeCLI → Orchestrator) */
+    getSessionLanguage(): Lang;
     /**
      * Reinitialize system prompt (used when switching models mid-conversation)
      */
@@ -31,11 +37,30 @@ export declare class Agent {
      * Determine if agent should auto-continue based on response
      */
     private shouldAutoContinue;
+    /**
+     * Detect if user is asking about the current project/codebase
+     */
+    private isProjectQuery;
+    /**
+     * Detect if model responded with a refusal to access files
+     */
+    private isRefusalResponse;
+    /**
+     * Get a snapshot of the current project for context injection.
+     * Runs glob + reads key config files automatically.
+     */
+    private getProjectContext;
     process(userInput: string): Promise<void>;
     /**
      * Determine appropriate action message based on user input
      */
     private getActionMessage;
+    /**
+     * Prune messages to stay within the model's context window.
+     * Strategy: keep system prompt + first user message (original request) + last N messages.
+     * Tool result messages are especially large and get trimmed first.
+     */
+    private pruneMessagesIfNeeded;
     private executeToolCalls;
     /**
      * Get contextual message for tool execution
