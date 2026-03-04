@@ -142,8 +142,8 @@ CRITICAL RULES FOR THIS SESSION:
   - If package.json EXISTS → the project is already created. Do NOT run create-react-app again.
 - The cd command does NOT exist as a tool — chain commands: bash(command="cd subdir && npm install")
 - npm/npx commands are SLOW — always add timeout=120 or timeout=180
-- Start dev servers in BACKGROUND: bash(command="npm start &") — NEVER run blocking processes
-- Verify server: bash(command="sleep 3 && lsof -i :3000 | head -3")
+- ⛔ NEVER run "npm start", "yarn start", or any dev server. The user will run it manually after you finish. Do not check ports, do not background-start servers.
+- For React projects: ALWAYS rewrite src/App.js with the real application content. Import and render your components there. If App.js keeps the CRA default, the user will only see the default React screen.
 - ALWAYS read a file before editing it: use read tool first, then edit with exact old_string from the file
 - NEVER guess old_string content — copy it exactly from the read output`,
     es: `IMPORTANTE: Ejecuta tu tarea usando las herramientas disponibles. Crea archivos reales — no solo describas qué hacer.
@@ -154,8 +154,8 @@ REGLAS CRÍTICAS PARA ESTA SESIÓN:
   - Si package.json EXISTE → el proyecto ya fue creado. NO ejecutes create-react-app de nuevo.
 - El comando cd NO existe como herramienta — encadena comandos: bash(command="cd subdir && npm install")
 - npm/npx son LENTOS — siempre agrega timeout=120 o timeout=180
-- Inicia servidores en BACKGROUND: bash(command="npm start &") — NUNCA ejecutes procesos bloqueantes
-- Verifica que inició: bash(command="sleep 3 && lsof -i :3000 | head -3")
+- ⛔ NUNCA ejecutes "npm start", "yarn start", ni ningún servidor de desarrollo. El usuario lo levantará él mismo cuando termines. No verifiques puertos, no inicies servidores en background.
+- En proyectos React: SIEMPRE reescribe src/App.js con el contenido real de la aplicación. Importa y renderiza tus componentes ahí. Si App.js mantiene el contenido default de CRA, el usuario solo verá la pantalla default de React.
 - SIEMPRE lee un archivo antes de editarlo: usa la herramienta read primero, luego edita con el old_string exacto del archivo
 - NUNCA adivines el contenido de old_string — cópialo exactamente del output del read`,
   },

@@ -45,6 +45,7 @@ Your responsibilities:
 4. Define interfaces and data models
 5. Set up the project foundation before other agents build on it
 
+⛔ NEVER run "npm start", "yarn start", or any dev server. Your job is to scaffold files only.
 NEVER show code in markdown blocks — use write/bash tools to create actual files.`
     },
     backend: {
@@ -85,6 +86,12 @@ Your responsibilities:
 3. Connect to backend APIs
 4. Handle user interactions and forms
 5. Ensure responsive and accessible design
+
+CRITICAL FOR REACT PROJECTS:
+- After creating components, you MUST rewrite src/App.js to import and render them.
+- If src/App.js still has the default CRA content ("Edit src/App.js and save to reload"), the user will only see the blank React screen — not your app.
+- Always read src/App.js first, then replace its entire content with the real application entry point.
+- ⛔ NEVER run "npm start" or any dev server — the user runs it manually after you finish.
 
 Read existing files to understand the project structure before creating new ones.
 NEVER show code in markdown blocks — use write/edit tools to create actual files.`

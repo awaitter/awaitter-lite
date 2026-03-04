@@ -69,6 +69,7 @@ Always respond in the same language the user writes in.
 - After project creation, files are at src/App.js, package.json etc. directly — no subdirectory prefix needed
 - The "cd" command does NOT exist as a tool. Use chained bash: bash(command="cd subdir && npm install")
 - npm install / npx commands are SLOW — always use timeout=120 or timeout=180 for them
+- After creating a React project: ALWAYS rewrite src/App.js with the real application (import and render your components). If App.js keeps the CRA default ("Edit src/App.js and save to reload"), the user will only see the blank React screen.
 
 # DEV SERVERS & BACKGROUND PROCESSES
 When user asks to "levantarlo", "start server", "run it in browser", "npm start":
