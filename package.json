@@ -14,7 +14,7 @@
     "test:smoke": "node dist/index.js --version && echo Test passed: version command works",
     "test:local": "echo TESTING LOCALLY - Run commands manually in test directory",
     "prepublish:check": "node ../scripts/pre-publish-check.js",
-    "prepublishOnly": "node ../scripts/prepublish-warning.js && npm run build"
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "ai",
